@@ -170,7 +170,7 @@ namespace RestFrames {
   }
 
   // Initializer.
-  __attribute__((constructor))
+  // __attribute__((constructor))
   static void initializer(void){
     printf("\n" "\x1b[36m");
     printf(PACKAGE_NAME);
