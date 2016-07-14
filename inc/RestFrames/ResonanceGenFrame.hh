@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   ResonanceGenFrame.hh
@@ -32,8 +32,6 @@
 
 #include "RestFrames/DecayGenFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
@@ -41,35 +39,30 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class ResonanceGenFrame : public DecayGenFrame {
   public:
-    ResonanceGenFrame(const string& sname, const string& stitle);
+    ResonanceGenFrame(const std::string& sname, const std::string& stitle);
     ResonanceGenFrame();
     virtual ~ResonanceGenFrame();
 
     static ResonanceGenFrame& Empty();
 
     virtual void SetMass(double mass);
-    virtual void SetEvtMass(double mass);
     virtual void SetWidth(double w);
-    
-    virtual void ResetFrame();
 
-    virtual double GetMass() const;
+    virtual void SetVariableMass(bool varymass = true);
+
     virtual double GetPoleMass() const;
-    virtual double GetMinimumMass() const;
     virtual double GetWidth() const;
-    virtual double GetProb(double mass) const;
-    virtual double GenerateMass(double Mmin = 0., double Mmax = -1.) const;
+   
+    virtual double GetProbMCMC(double mass = -1.) const;
+    virtual void GenerateMassMCMC(double& mass, double& prob, 
+				  double max = -1.) const;
 
-  protected:
-    static ResonanceGenFrame m_Empty;
+  private:
     double m_PoleMass;
     double m_Width;
-    void Init();
 
+    static ResonanceGenFrame m_Empty;
   };
-
-  double GetProb(double Mp, double Mc1, double Mc2);
-  int DoubleMax(const void *a, const void *b);
 
 }
 

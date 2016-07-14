@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   LabRecoFrame.hh
@@ -33,8 +33,6 @@
 #include "RestFrames/ReconstructionFrame.hh"
 #include "RestFrames/LabFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class Jigsaw;
@@ -45,7 +43,7 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class LabRecoFrame : public LabFrame<ReconstructionFrame> {
   public:
-    LabRecoFrame(const string& sname, const string& stitle);
+    LabRecoFrame(const std::string& sname, const std::string& stitle);
     LabRecoFrame();
     virtual ~LabRecoFrame();
     
@@ -56,15 +54,15 @@ namespace RestFrames {
     virtual bool AnalyzeEvent();
 
     void AddTreeState(VisibleState& state) const;
-    void AddTreeStates(const RestFrames::RFList<VisibleState>& states) const;
+    void AddTreeStates(const VisibleStateList& states) const;
     void RemoveTreeState(const VisibleState& state) const;
-    void RemoveTreeStates(const RestFrames::RFList<VisibleState>& states) const;
-    RestFrames::RFList<VisibleState> const& GetTreeStates() const;
+    void RemoveTreeStates(const VisibleStateList& states) const;
+    VisibleStateList const& GetTreeStates() const;
 
   protected:
-    RestFrames::RFList<Group>  m_TreeGroups;
-    RestFrames::RFList<Jigsaw> m_TreeJigsaws;
-    mutable RestFrames::RFList<VisibleState>  m_TreeStates;
+    GroupList  m_TreeGroups;
+    JigsawList m_TreeJigsaws;
+    mutable VisibleStateList m_TreeStates;
   
     bool InitializeTreeStates();
     bool InitializeTreeGroups();
@@ -73,9 +71,8 @@ namespace RestFrames {
     bool ExecuteJigsaws();
 
   private:
-    void Init();
     VisibleState& GetNewVisibleState();
-    RestFrames::RFList<VisibleState> m_InitStates;
+    VisibleStateList m_InitStates;
 
   };
 

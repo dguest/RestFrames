@@ -41,6 +41,7 @@
 #include "RestFrames/TreePlotLink.hh"
 #include "RestFrames/HistPlot.hh"
 #include "RestFrames/HistPlotVar.hh"
+#include "RestFrames/HistPlotCategory.hh"
 
 #include "RestFrames/RestFrame.hh"
 #include "RestFrames/LabFrame.hh"
@@ -61,6 +62,7 @@
 #include "RestFrames/VisibleGenFrame.hh"
 #include "RestFrames/InvisibleGenFrame.hh"
 #include "RestFrames/ResonanceGenFrame.hh"
+#include "RestFrames/ppLabGenFrame.hh"
 
 #include "RestFrames/Group.hh"
 #include "RestFrames/InvisibleGroup.hh"
@@ -76,9 +78,17 @@
 #include "RestFrames/SetMassInvJigsaw.hh"
 #include "RestFrames/SetRapidityInvJigsaw.hh"
 #include "RestFrames/ContraBoostInvJigsaw.hh"
+#include "RestFrames/CombinedCBInvJigsaw.hh"
+#include "RestFrames/MinMassesSqInvJigsaw.hh"
+#include "RestFrames/MinMassDiffInvJigsaw.hh"
+#include "RestFrames/MaxProbBreitWignerInvJigsaw.hh"
 
 #include "RestFrames/CombinatoricJigsaw.hh"
+#include "RestFrames/MinMassesSqCombJigsaw.hh"
 #include "RestFrames/MinMassesCombJigsaw.hh"
+#include "RestFrames/MinMassChi2CombJigsaw.hh"
+#include "RestFrames/MinMassDiffCombJigsaw.hh"
+#include "RestFrames/MaxProbBreitWignerCombJigsaw.hh"
 
 
 #endif

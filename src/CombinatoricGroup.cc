@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricGroup.cc
@@ -32,8 +32,6 @@
 #include "RestFrames/ReconstructionFrame.hh"
 #include "RestFrames/Jigsaw.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
@@ -41,7 +39,8 @@ namespace RestFrames {
   // a combinatoric collection of particles
   ///////////////////////////////////////////////
 
-  CombinatoricGroup::CombinatoricGroup(const string& sname,const string& stitle) : 
+  CombinatoricGroup::CombinatoricGroup(const std::string& sname,
+				       const std::string& stitle) : 
     Group(sname, stitle)
   {
     m_Type = kCombinatoricGroup;
@@ -67,24 +66,42 @@ namespace RestFrames {
     if(!frame) return;
     if(!frame.IsVisibleFrame()) return;
     if(!frame.IsRecoFrame()) return;
+
     int N = GetNFrames();
     Group::AddFrame(frame);
     if(GetNFrames() == N) 
       return;
-    m_NElementsForFrame[&frame] = 1;
+    
+    m_NElementsForFrame[&frame] = 0;
     m_NExclusiveElementsForFrame[&frame] = true;
+  }
+
+  void CombinatoricGroup::RemoveFrame(RestFrame& frame){
+    if(!ContainsFrame(frame)) 
+      return;
+    m_NElementsForFrame.erase(&frame);
+    m_NExclusiveElementsForFrame.erase(&frame);
+    Group::RemoveFrame(frame);
   }
   
   void CombinatoricGroup::SetNElementsForFrame(const RestFrame& frame, 
 					       int N, bool exclusive_N){
-    if(!ContainsFrame(frame)) return;
-    m_NElementsForFrame[&frame] = max(0, N);
+    if(!ContainsFrame(frame)){ 
+      N = 0;
+      exclusive_N = true;
+      return;
+    }
+
+    SetMind(false);
+
+    m_NElementsForFrame[&frame] = std::max(0, N);
     m_NExclusiveElementsForFrame[&frame] = exclusive_N;
   }
 
   void CombinatoricGroup::GetNElementsForFrame(const RestFrame& frame, int& N, 
 					       bool& exclusive_N) const {
     if(!ContainsFrame(frame)) return;
+    
     N = m_NElementsForFrame[&frame];
     exclusive_N = m_NExclusiveElementsForFrame[&frame];
   }
@@ -96,8 +113,10 @@ namespace RestFrames {
   }
 
   CombinatoricState& CombinatoricGroup::InitializeParentState(){
-    string name = GetName()+"_parent";
-    return *(new CombinatoricState(name, name));
+    std::string name = GetName()+"_parent";
+    CombinatoricState* statePtr = new CombinatoricState(name, name);
+    AddDependent(statePtr);
+    return *statePtr;
   }
 
   CombinatoricState& CombinatoricGroup::GetParentState() const {
@@ -132,15 +151,30 @@ namespace RestFrames {
     return SetSpirit(true);
   }
 
-  RFKey CombinatoricGroup::AddLabFrameFourVector(const TLorentzVector& V){
-    VisibleState& state = GetNewElement();
+  RFKey CombinatoricGroup::AddLabFrameFourVector(const TLorentzVector& V,
+						 const RFCharge& charge){
+    if(IsEmpty()) return RFKey(-1);
     
     TLorentzVector P = V;
     if(P.M() < 0.) P.SetVectM(V.Vect(),0.);
+    
+    VisibleState& state = GetNewElement();
     state.SetFourVector(P);
+    state.SetCharge(charge);
     m_Elements.Add(state);
    
     return state.GetKey();
+  }
+
+  RFKey CombinatoricGroup::AddLabFrameFourVector(const TLorentzVector& V,
+						 int charge){
+    return AddLabFrameFourVector(V, RFCharge(charge));
+  }
+  
+  RFKey CombinatoricGroup::AddLabFrameFourVector(const TLorentzVector& V,
+						 int charge_num, 
+						 int charge_den){
+    return AddLabFrameFourVector(V, RFCharge(charge_num,charge_den));
   }
 
   RestFrame const& CombinatoricGroup::GetFrame(const RFKey& key) const {
@@ -156,7 +190,7 @@ namespace RestFrames {
     int N = GetNChildStates();
     for(int i = N-1; i >= 0; i--)
       if(GetChildState(i).ContainsElement(key))
-	return GetChildState(i).GetElement(key).GetFourVector();
+  	return GetChildState(i).GetElement(key).GetFourVector();
     return TLorentzVector(0.,0.,0.,0.);
   }
 
@@ -170,7 +204,7 @@ namespace RestFrames {
       return m_InitStates[m_Elements.GetN()];
     char strn[10];
     sprintf(strn,"%d",m_Elements.GetN()+1);
-    string name = GetName()+"_"+string(strn);
+    std::string name = GetName()+"_"+std::string(strn);
     VisibleState* statePtr = new VisibleState(name,name);
     AddDependent(statePtr);
     m_InitStates.Add(*statePtr);

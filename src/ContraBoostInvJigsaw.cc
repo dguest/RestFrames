@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   ContraBoostInvJigsaw.cc
@@ -28,17 +28,15 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include "RestFrames/ContraBoostInvJigsaw.hh"
-#include "RestFrames/InvisibleState.hh"
-
-using namespace std;
 
 namespace RestFrames {
 
-  ///////////////////////////////////////////////
-  //ContraBoostInvJigsaw class methods
-  ///////////////////////////////////////////////
-  ContraBoostInvJigsaw::ContraBoostInvJigsaw(const string& sname,const string& stitle) : 
-    InvisibleJigsaw(sname, stitle, 2, 2) {}
+  ContraBoostInvJigsaw::ContraBoostInvJigsaw(const std::string& sname,
+					     const std::string& stitle) : 
+    InvisibleJigsaw(sname, stitle, 2, 2)
+  {
+    m_InvMassDependancy = true;
+  }
 
   ContraBoostInvJigsaw::ContraBoostInvJigsaw() : InvisibleJigsaw() {}
  
@@ -48,47 +46,48 @@ namespace RestFrames {
     return ContraBoostInvJigsaw::m_Empty;
   }
 
-  void ContraBoostInvJigsaw::FillInvisibleMassJigsawDependancies(RFList<Jigsaw>& jigsaws) const { 
-    int Nchild = GetNChildren();
-    for(int i = 0 ; i < Nchild; i++){
-      GetChildState(i).FillInvisibleMassJigsawDependancies(jigsaws);
-      int N = m_DependancyStates[i].GetN();
-      for(int j = 0; j < N; j++)
-	m_DependancyStates[i][j].FillGroupJigsawDependancies(jigsaws);
-    }
-  }
-
   double ContraBoostInvJigsaw::GetMinimumMass() const {
+    if(!IsSoundMind())
+      return 0.;
+
     double Minv1 = GetChildState(0).GetMinimumMass();
     double Minv2 = GetChildState(1).GetMinimumMass();
-    TLorentzVector Pvis1 = m_DependancyStates[0].GetFourVector();
-    TLorentzVector Pvis2 = m_DependancyStates[1].GetFourVector();
-    double Mvis1 = fabs(Pvis1.M());
-    double Mvis2 = fabs(Pvis2.M());
-    double Minv = max(0.,max(Minv1,Minv2));
-    double Mvismin = min(Mvis1,Mvis2);
-    double Mvismax = max(Mvis1,Mvis2);
+    TLorentzVector Pvis1 = GetDependancyStates(0).GetFourVector();
+    TLorentzVector Pvis2 = GetDependancyStates(1).GetFourVector();
+    double Mvis1 = std::max(Pvis1.M(), 0.);
+    double Mvis2 = std::max(Pvis2.M(), 0.);
+    double M12 = (Pvis1+Pvis2).M();
 
-    if(Mvismin <= 0.0 && Minv > 0.0) return (Pvis1+Pvis2).M();
+    if(Minv1 < -0.5 && Minv2 < -0.5) // children can go tachyonic
+      return 2.*GetP(M12,Mvis1,Mvis2);
 
-    if(Minv <= Mvismin){
-      return sqrt( (Pvis1+Pvis2).M2() + 4.*(Minv-Mvismin)*(Minv+Mvismax) );
-    } else {
-      return (Pvis1+Pvis2).M()*Minv/Mvismin;
-    }
+    Minv1 = std::max(Minv1,0.);
+    Minv2 = std::max(Minv2,0.);
+
+    double Minvmax = std::max(0.,std::max(Minv1,Minv2));
+    
+    double Mvismin = std::min(Mvis1,Mvis2);
+    double Mvismax = std::max(Mvis1,Mvis2);
+    
+    if(Minv1 < Mvis2 && Minv2 < Mvis1){
+      if(Minvmax <= Mvismin)
+	return sqrt( M12*M12 + 4.*(Minvmax-Mvismin)*(Minvmax+Mvismax) );
+      return M12;
+    } 
+
+    if(Mvismin <= 0.0 && Minvmax > 0.)
+      return M12;
+
+    return M12*(1.+sqrt(std::max(Minv1*Minv1-Mvis2*Mvis2,
+				 Minv2*Minv2-Mvis1*Mvis1))/Mvismin); 
   }
 
   bool ContraBoostInvJigsaw::AnalyzeEvent(){
     if(!IsSoundMind())
       return SetSpirit(false);
-    
-    CalcCoef();
-    double c1 = GetC1();
-    double c2 = GetC2();
 
-
-    TLorentzVector Pvis1 = m_DependancyStates[0].GetFourVector();
-    TLorentzVector Pvis2 = m_DependancyStates[1].GetFourVector();
+    TLorentzVector Pvis1 = GetDependancyStates(0).GetFourVector();
+    TLorentzVector Pvis2 = GetDependancyStates(1).GetFourVector();
     TLorentzVector INV = GetParentState().GetFourVector();
 
     // go to the rest frame of (Pvis1+Pvis2+INV system)
@@ -99,10 +98,34 @@ namespace RestFrames {
 
     double E1 = Pvis1.E();
     double E2 = Pvis2.E();
+    double m1 = std::max(0.,Pvis1.M());
+    double m2 = std::max(0.,Pvis2.M());
     TVector3 P1 = Pvis1.Vect();
     TVector3 P2 = Pvis2.Vect();
 
-    double N = (E1+E2 + sqrt( (E1+E2)*(E1+E2) - (Pvis1+Pvis2).M2() + INV.M2() ))/(c1*E1+c2*E2)/2.;
+    double Minv1 = GetChildState(0).GetMinimumMass();
+    double Minv2 = GetChildState(1).GetMinimumMass();
+    double Minv = std::max(0.,std::max(Minv1,Minv2));
+    double Mvis = std::min(m1,m2);
+
+    double c1 = 1.;
+    double c2 = 1.;
+    if(Minv < Mvis){
+      double MC2 = 2.*(E1*E2 + P1.Dot(P2));
+      double k1 =  (m1+m2)*(m1-m2)*(1.-Minv/Mvis) + MC2-2*m1*m2 + (m1+m2)*fabs(m1-m2)*Minv/Mvis;
+      double k2 = -(m1+m2)*(m1-m2)*(1.-Minv/Mvis) + MC2-2*m1*m2 + (m1+m2)*fabs(m1-m2)*Minv/Mvis;
+      double Xbar = sqrt( (k1+k2)*(k1+k2)*(MC2*MC2-4*m1*m1*m2*m2) +
+			  16.*Minv*Minv*(k1*k1*m1*m1 + k2*k2*m2*m2 + k1*k2*MC2) );
+      double K = ( fabs(k1*m1*m1-k2*m2*m2) - 0.5*fabs(k2-k1)*MC2 + 0.5*Xbar )/
+	(k1*k1*m1*m1 + k2*k2*m2*m2 + k1*k2*MC2);
+      c1 = 0.5*(1.+K*k1);
+      c2 = 0.5*(1.+K*k2);
+    }
+
+    double sumE  = E1+E2;
+    double sumcE = c1*E1+c2*E2;
+
+    double N = (sqrt(sumE*sumE-(Pvis1+Pvis2).M2()+INV.M2())+sumE)/sumcE/2.;
 
     c1 *= N;
     c2 *= N;
@@ -115,6 +138,12 @@ namespace RestFrames {
 
     INV1.SetPxPyPzE(Pinv1.X(),Pinv1.Y(),Pinv1.Z(),Einv1);
     INV2.SetPxPyPzE(Pinv2.X(),Pinv2.Y(),Pinv2.Z(),Einv2);
+
+    if(Minv1 >= 0. && INV1.M() < Minv1)
+      INV1.SetVectM(Pinv1,Minv1);
+    if(Minv2 >= 0. && INV2.M() < Minv2)
+      INV2.SetVectM(Pinv2,Minv2);
+
     INV1.Boost(Boost);
     INV2.Boost(Boost);
 
@@ -122,39 +151,6 @@ namespace RestFrames {
     GetChildState(1).SetFourVector(INV2);
     
     return SetSpirit(true);
-  }
-
-  void ContraBoostInvJigsaw::CalcCoef(){
-    double Minv1 = GetChildState(0).GetMinimumMass();
-    double Minv2 = GetChildState(1).GetMinimumMass();
-    TLorentzVector Pvis1 = m_DependancyStates[0].GetFourVector();
-    TLorentzVector Pvis2 = m_DependancyStates[1].GetFourVector();
-    double m1 = max(0.,Pvis1.M());
-    double m2 = max(0.,Pvis2.M());
-    double Minv = max(Minv1,Minv2);
-    double Mvis = min(m1,m2);
-
-    if(Minv >= Mvis){
-      m_C1 = 1.;
-      m_C2 = 1.;
-      return;
-    }
-    // go to the rest frame of the vis+inv system
-    TLorentzVector INV = GetParentState().GetFourVector();
-    TVector3 Boost = (Pvis1+Pvis2+INV).BoostVector();
-    Pvis1.Boost(-Boost);
-    Pvis2.Boost(-Boost);
-  
-    double MC2 = 2.*( Pvis1.E()*Pvis2.E() + Pvis1.Vect().Dot(Pvis2.Vect()) );
-    double k1 =  (m1+m2)*(m1-m2)*(1.-Minv/Mvis) + MC2-2*m1*m2 + (m1+m2)*fabs(m1-m2)*Minv/Mvis;
-    double k2 = -(m1+m2)*(m1-m2)*(1.-Minv/Mvis) + MC2-2*m1*m2 + (m1+m2)*fabs(m1-m2)*Minv/Mvis;
-    double Xbar = sqrt( (k1+k2)*(k1+k2)*(MC2*MC2-4*m1*m1*m2*m2) + 16.*Minv*Minv*(k1*k1*m1*m1 + k2*k2*m2*m2 + k1*k2*MC2) );
-    double N = ( fabs(k1*m1*m1-k2*m2*m2) - 0.5*fabs(k2-k1)*MC2 + 0.5*Xbar )/(k1*k1*m1*m1 + k2*k2*m2*m2 + k1*k2*MC2);
-    m_C1 = 0.5*(1.+N*k1);
-    m_C2 = 0.5*(1.+N*k2);
-    N = sqrt(m_C1*m_C2);
-    m_C1 /= N;
-    m_C2 /= N;
   }
 
   ContraBoostInvJigsaw ContraBoostInvJigsaw::m_Empty;

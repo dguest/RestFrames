@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleGroup.cc
@@ -32,15 +32,14 @@
 #include "RestFrames/ReconstructionFrame.hh"
 #include "RestFrames/Jigsaw.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // InvisibleGroup class
   ///////////////////////////////////////////////
 
-  InvisibleGroup::InvisibleGroup(const string& sname, const string& stitle) : 
+  InvisibleGroup::InvisibleGroup(const std::string& sname, 
+				 const std::string& stitle) : 
     Group(sname, stitle)
   {
     m_Type = kInvisibleGroup;
@@ -73,8 +72,10 @@ namespace RestFrames {
   }
 
   InvisibleState& InvisibleGroup::InitializeParentState(){
-    string name = GetName()+"_parent";
-    return *(new InvisibleState(name, name));
+    std::string name = GetName()+"_parent";
+    InvisibleState* statePtr = new InvisibleState(name, name);
+    AddDependent(statePtr);
+    return *statePtr;
   }
 
   InvisibleState& InvisibleGroup::GetParentState() const {
@@ -99,12 +100,16 @@ namespace RestFrames {
     return true;
   }
   
+  void InvisibleGroup::SetMass(double M){
+    m_Lab_P.SetVectM(m_Lab_P.Vect(), std::max(0., M));
+  }
+
   void InvisibleGroup::SetLabFrameFourVector(const TLorentzVector& V){
-    m_Lab_P.SetVectM(V.Vect(),V.M());
+    m_Lab_P.SetVectM(V.Vect(), std::max(0., V.M()));
   }
 
   void InvisibleGroup::SetLabFrameThreeVector(const TVector3& V){
-    m_Lab_P.SetVectM(V,0.0);
+    m_Lab_P.SetVectM(V, m_Lab_P.M());
   }
 
   TLorentzVector InvisibleGroup::GetLabFrameFourVector() const {
@@ -117,7 +122,7 @@ namespace RestFrames {
       return SetSpirit(false);
     }
     m_GroupStatePtr->SetFourVector(m_Lab_P);
-    return SetSpirit(true);;
+    return SetSpirit(true);
   }
   
   InvisibleGroup InvisibleGroup::m_Empty;

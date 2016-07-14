@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricState.cc
@@ -32,27 +32,22 @@
 #include "RestFrames/VisibleState.hh"
 #include "RestFrames/RestFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // CombinatoricState class
   ///////////////////////////////////////////////
 
-  CombinatoricState::CombinatoricState(const string& sname, const string& stitle) 
+  CombinatoricState::CombinatoricState(const std::string& sname, 
+				       const std::string& stitle) 
     : State(sname, stitle)
   {
-    Init();
+    m_Type = kCombinatoricState;
   }
 
   CombinatoricState::CombinatoricState() : State() {}
 
   CombinatoricState::~CombinatoricState() {}
-
-  void CombinatoricState::Init(){
-    m_Type = kCombinatoricState;
-  }
 
   CombinatoricState& CombinatoricState::Empty(){
     return CombinatoricState::m_Empty;
@@ -63,7 +58,9 @@ namespace RestFrames {
     State::Clear();
   }
 
-  void CombinatoricState::AddFrame(RestFrame& frame){
+  void CombinatoricState::AddFrame(const RestFrame& frame){
+    if(IsEmpty()) return;
+    
     if(!frame) return;
     if(frame.IsVisibleFrame() &&
        frame.IsRecoFrame())
@@ -88,14 +85,16 @@ namespace RestFrames {
   }
 
   void CombinatoricState::AddElement(VisibleState& state){
+    if(IsEmpty()) return;
     m_Elements += state;
   }
 
-  void CombinatoricState::AddElements(const RFList<VisibleState>& states){
+  void CombinatoricState::AddElements(const VisibleStateList& states){
+    if(IsEmpty()) return;
     m_Elements += states;
   }
 
-  RFList<VisibleState> CombinatoricState::GetElements() const {
+  VisibleStateList const& CombinatoricState::GetElements() const {
     return m_Elements;
   }
 
@@ -116,12 +115,16 @@ namespace RestFrames {
   }
 
   void CombinatoricState::Boost(const TVector3& B){
-    RFList<State>(m_Elements).Boost(B);
+    StateList(m_Elements).Boost(B);
     State::Boost(B);
   }
 
   TLorentzVector CombinatoricState::GetFourVector() const {
-    return RFList<State>(m_Elements).GetFourVector();
+    return StateList(m_Elements).GetFourVector();
+  }
+
+  RFCharge CombinatoricState::GetCharge() const {
+    return StateList(m_Elements).GetCharge();
   }
 
   CombinatoricState CombinatoricState::m_Empty;

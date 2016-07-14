@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   Group.hh
@@ -32,10 +32,8 @@
 
 #include "RestFrames/RFBase.hh"
 
-using namespace std;
-
 namespace RestFrames {
- 
+
   class Jigsaw;
   class RestFrame;
 
@@ -46,15 +44,14 @@ namespace RestFrames {
   // Group class
   ///////////////////////////////////////////////
   class Group : public RFBase {
+
   public:
-    Group(const string& sname, const string& stitle);
+    Group(const std::string& sname, const std::string& stitle);
     Group();
     virtual ~Group();
 
     /// \brief Clears Group of all connections to other objects
     virtual void Clear();
-
-    static Group& Empty();
 
     bool IsInvisibleGroup() const;
     bool IsCombinatoricGroup() const;
@@ -62,49 +59,59 @@ namespace RestFrames {
     GroupType GetType() const { return m_Type; }
 
     virtual void AddFrame(RestFrame& frame);
+    virtual void AddFrames(const RestFrameList& frames);
     virtual void AddJigsaw(Jigsaw& jigsaw);
 
-    void RemoveFrame(const RestFrame& frame);
-    void RemoveJigsaw(const Jigsaw& jigsaw);
+    virtual void RemoveFrame(RestFrame& frame);
+    void RemoveFrames();
+    void RemoveJigsaw(Jigsaw& jigsaw);
+    void RemoveJigsaws();
 
     bool ContainsFrame(const RestFrame& frame) const;
     
     int GetNFrames() const;
-    const RestFrames::RFList<RestFrame>& GetListFrames() const;
-    const RestFrames::RFList<Jigsaw>& GetListJigsaws() const;
+    const RestFrameList& GetListFrames() const;
+    const JigsawList& GetListJigsaws() const;
 
-    virtual State& GetParentState() const;
-    State& GetChildState(const RestFrame& frame) const;
-    RestFrames::RFList<State> GetChildStates(const RestFrames::RFList<RestFrame>& frames) const;
-
-    RestFrame const& GetLabFrame() const;
+    static Group& Empty();
+    
+  protected:
+    GroupType m_Type;
+    State* m_GroupStatePtr;
 
     virtual bool InitializeAnalysis();
     virtual bool ClearEvent() = 0;
     virtual bool AnalyzeEvent() = 0;
 
-  protected:
-    GroupType m_Type;
-    State* m_GroupStatePtr;
+    virtual State& InitializeParentState() = 0;
+    virtual State& GetParentState() const;
 
     int GetNChildStates() const;
     virtual State& GetChildState(int i) const;
 
-    virtual State& InitializeParentState() = 0;
+    State& GetChildState(const RestFrame& frame) const;
+    StateList GetChildStates(const RestFrameList& frames) const;
+
+    RestFrame const& GetLabFrame() const;
+
+  private:
+    RestFrameList m_Frames;
+    JigsawList    m_Jigsaws;
+    StateList     m_States;
+
+    StateList  m_StatesToResolve;
+    JigsawList m_JigsawsToUse;
 
     bool ResolveUnknowns();
     bool ResolveState(const State& state);
-    void InitializeJigsaw(Jigsaw& jigsaw);
-
-  private:
-    RestFrames::RFList<RestFrame> m_Frames;
-    RestFrames::RFList<Jigsaw> m_Jigsaws;
-    RestFrames::RFList<State> m_States;
-
-    RestFrames::RFList<State> m_StatesToResolve;
-    RestFrames::RFList<Jigsaw> m_JigsawsToUse;
+    bool InitializeJigsaw(Jigsaw& jigsaw);
 
     static int m_class_key;
+
+    friend class TreePlot;
+    friend class ReconstructionFrame;
+    friend class LabRecoFrame;
+    friend class Jigsaw;
 
   };
   

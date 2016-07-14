@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricJigsaw.hh
@@ -30,18 +30,19 @@
 #ifndef CombinatoricJigsaw_HH
 #define CombinatoricJigsaw_HH
 
+#include "RestFrames/RestFrame.hh"
 #include "RestFrames/Jigsaw.hh"
 #include "RestFrames/CombinatoricGroup.hh"
 #include "RestFrames/CombinatoricState.hh"
-
-using namespace std;
 
 namespace RestFrames {
 
   class CombinatoricJigsaw : public Jigsaw {
   public:
     //constructor and destructor
-    CombinatoricJigsaw(const string& sname, const string& stitle);
+    CombinatoricJigsaw(const std::string& sname, 
+		       const std::string& stitle,
+		       int Ncomb, int Nobject);
     CombinatoricJigsaw();
     virtual ~CombinatoricJigsaw();
 
@@ -52,33 +53,68 @@ namespace RestFrames {
     virtual void SetGroup(Group& group = Group::Empty());
     virtual CombinatoricGroup& GetGroup() const;
 
-    virtual void SetParentState(State& state = State::Empty());
-    virtual CombinatoricState& GetParentState() const;
-    virtual CombinatoricState& GetChildState(int i) const;
+    virtual void AddCombFrame(const RestFrame& frame, int i = 0);
+    void AddCombFrames(const ConstRestFrameList& frames, int i = 0);
 
-    virtual void AddFrame(RestFrame& frame, int i = 0);
-    virtual void AddFrames(const RestFrames::RFList<RestFrame>& frames, int i = 0);
+    virtual void AddObjectFrame(const RestFrame& frame, int i = 0);
+    void AddObjectFrames(const ConstRestFrameList& frames, int i = 0);
 
-    virtual bool InitializeJigsawExecutionList(RestFrames::RFList<Jigsaw>& exec_jigsaws);
+    void SetCombCharge(const RFCharge& charge, int i);
+    void SetCombCharge(int charge, int i);
+    void SetCombCharge(int charge_num, int charge_den, int i);
+    void UnsetCombCharge(int i);
 
-    virtual bool AnalyzeEvent();
-  
+    void SetObjectCharge(const RFCharge& charge, int i);
+    void SetObjectCharge(int charge, int i);
+    void SetObjectCharge(int charge_num, int charge_den, int i);
+    void UnsetObjectCharge(int i);
+
   protected:
+    virtual bool IsSoundBody() const;
+    CombinatoricState& GetNewChildState();
+    
+    virtual bool InitializeAnalysis();
+
     virtual bool InitializeCombinatoric();
     virtual bool LoopCombinatoric();
-    virtual double EvaluateMetric() const = 0;
 
-    RestFrames::RFList<VisibleState> m_InputStates;
-    map<const State*, int>  m_NForChild;
-    map<const State*, bool> m_NExclusive;
+    virtual bool EvaluateMetric(double& metric) const = 0;
 
-    virtual CombinatoricState& GetNewChildState();
- 
-    RestFrames::RFList<Jigsaw> m_ExecuteJigsaws;
-    bool ExecuteDependancyJigsaws();
+    virtual bool AnalyzeEvent();
     
+    int GetNInputStates() const; 
+    VisibleState& GetInputState(int i = 0) const;
+
+    int GetNinputForChild(int i = 0) const;
+    bool IsNinputExclForChild(int i = 0) const;
+
+    bool IsChargeSetForChild(int i = 0) const;
+    RFCharge GetChargeForChild(int i = 0) const;
+    bool IsChargeSetForObject(int i = 0) const;
+    RFCharge GetChargeForObject(int i = 0) const;
+
+    void SetParentState(State& state = State::Empty());
+    CombinatoricState const& GetParentState() const;
+    
+    CombinatoricState& GetChildState(int i) const;
+ 
+    bool InitializeJigsawExecutionList(JigsawList& exec_jigsaws);
+
+    JigsawList m_ExecuteJigsaws;
+    bool ExecuteDependancyJigsaws();
+
   private:
-    void Init();
+    const int m_Ncomb;
+    const int m_Nobj;
+
+    VisibleStateList m_InputStates;
+
+    int m_NinputTOT;
+    bool m_NExclusiveTOT;
+    std::vector<int> m_NForChild;
+    std::vector<int> m_NExclusive;
+    mutable std::map<int, RFCharge> m_ChargeForChild;
+    mutable std::map<int, RFCharge> m_ChargeForObject;
   };
 
 }

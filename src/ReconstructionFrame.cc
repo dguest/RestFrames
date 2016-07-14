@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   ReconstructionFrame.cc
@@ -33,27 +33,24 @@
 #include "RestFrames/Group.hh"
 #include "RestFrames/VisibleState.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // ReconstructionFrame class methods
   ///////////////////////////////////////////////
-  ReconstructionFrame::ReconstructionFrame(const string& sname, const string& stitle)
+  ReconstructionFrame::ReconstructionFrame(const std::string& sname, 
+					   const std::string& stitle)
     : RestFrame(sname, stitle)
   {
-    Init();
+    m_Ana = kRecoFrame;
+    m_GroupPtr = nullptr;
   }
 
   ReconstructionFrame::ReconstructionFrame()
     : RestFrame() {}
 
-  ReconstructionFrame::~ReconstructionFrame() {}
-
-  void ReconstructionFrame::Init(){
-    m_Ana = kRecoFrame;
-    m_GroupPtr = nullptr;
+  ReconstructionFrame::~ReconstructionFrame(){ 
+    Clear(); 
   }
 
   void ReconstructionFrame::Clear(){
@@ -62,7 +59,6 @@ namespace RestFrames {
     RestFrame::Clear();
   }
 
-  /// \brief Returns empty instance of class
   ReconstructionFrame& ReconstructionFrame::Empty(){
     return VisibleRecoFrame::Empty();
   }
@@ -71,6 +67,25 @@ namespace RestFrames {
     if(!frame) return;
     if(!frame.IsRecoFrame()) return;
     RestFrame::AddChildFrame(frame);
+  }
+
+  void ReconstructionFrame::RemoveChildFrame(RestFrame& frame){
+    SetBody(false);
+    bool contains = m_ChildFrames.Contains(frame);
+    m_ChildBoosts.erase(&frame);
+    m_ChildStates.erase(&frame);
+    m_ChildFrames.Remove(frame);
+    if(contains)
+      frame.SetParentFrame();
+  }
+
+  void ReconstructionFrame::RemoveChildFrames(){
+    SetBody(false);
+    while(GetNChildren() > 0)
+      RemoveChildFrame(m_ChildFrames[0]);
+    m_ChildFrames.Clear();
+    m_ChildBoosts.clear();
+    m_ChildStates.clear();
   }
 
   void ReconstructionFrame::SetParentFrame(RestFrame& frame){
@@ -95,13 +110,29 @@ namespace RestFrames {
       return ReconstructionFrame::Empty();
   }
 
+  StateList const& ReconstructionFrame::GetChildStates(int i) const {
+    return GetChildStates(GetChildFrame(i));
+  }
+  
+  StateList const& ReconstructionFrame::GetChildStates(const RestFrame& child) const {
+    if(m_ChildStates.count(&child) <= 0)
+      return State::EmptyList();
+
+    return m_ChildStates[&child];
+  }
+
   void ReconstructionFrame::SetGroup(Group& group){
-    if(m_GroupPtr)
+    if(IsEmpty()) return;
+    
+    SetMind(false);
+
+    if(m_GroupPtr){
       if(*m_GroupPtr != group){
 	Group* groupPtr = m_GroupPtr;
 	m_GroupPtr = nullptr;
 	groupPtr->RemoveFrame(*this);
       }
+    }
     if(!group)
       m_GroupPtr = nullptr;
     else
@@ -115,13 +146,13 @@ namespace RestFrames {
       return Group::Empty();
   }
 
-  RFList<Group> ReconstructionFrame::GetListGroups() const {
-    RFList<Group> groups;
+  GroupList ReconstructionFrame::GetListGroups() const {
+    GroupList groups;
     FillListGroupsRecursive(groups);
     return groups;
   }
 
-  void ReconstructionFrame::FillListGroupsRecursive(RFList<Group>& groups) const {
+  void ReconstructionFrame::FillListGroupsRecursive(GroupList& groups) const {
     if(m_GroupPtr) groups.Add(*m_GroupPtr);
     int Nchild = GetNChildren();
     for(int i = 0; i < Nchild; i++)
@@ -133,21 +164,21 @@ namespace RestFrames {
     if(!GetLabFrame())
       return false;
       
-    const RFList<VisibleState>& states = 
+    const VisibleStateList& states = 
       static_cast<const LabRecoFrame&>(GetLabFrame()).GetTreeStates();
    
     int Nchild = GetNChildren();
     for(int i = 0; i < Nchild; i++){
       RestFrame& child = GetChildFrame(i);
-      m_ChildStates[&child] = RFList<State>();
+      m_ChildStates[&child] = StateList();
       RFList<ReconstructionFrame> frames = child.GetListVisibleFrames();
       int Nf = frames.GetN();
       for(int f = 0; f < Nf; f++)
 	if(!frames[f].GetGroup())
-	  if(!m_ChildStates[&child].Add(RFList<State>(states).GetFrame(frames[f]))){
+	  if(!m_ChildStates[&child].Add(StateList(states).GetFrame(frames[f]))){
 	    m_Log << LogWarning;
 	    m_Log << "Unable to associate State with Group-less Frame:";
-	    m_Log << Log(frames[f]) << m_End;
+	    m_Log << Log(frames[f]) << LogEnd;
 	    return false;
 	  }
     }
@@ -155,34 +186,35 @@ namespace RestFrames {
   }
 
   bool ReconstructionFrame::InitializeGroupStates(){
-    RFList<Group> groups = GetListGroups();
+    GroupList groups = GetListGroups();
     int Ngroup = groups.GetN();
     int Nchild = GetNChildren();
 
     for(int c = 0; c < Nchild; c++){
-      RFList<RestFrame> frames = 
+      RestFrameList frames = 
 	GetChildFrame(c).GetListVisibleFrames() +
 	GetChildFrame(c).GetListInvisibleFrames();
       int Nframe = frames.GetN();
-      for(int f = 0; f < Nframe; f++)
-	for(int g = 0; g < Ngroup; g++)
+      for(int f = 0; f < Nframe; f++){
+	for(int g = 0; g < Ngroup; g++){
 	  if(groups[g].ContainsFrame(frames[f])){
 	    State& state = groups[g].GetChildState(frames[f]);
 	    if(!state){
 	      m_Log << LogWarning;
-	      m_Log << "Unable to get State associated with Group Frame: " << endl;
+	      m_Log << "Unable to get State associated with Group Frame: " << std::endl;
 	      m_Log << " Frame:" << Log(frames[f]);
-	      m_Log << " Group:" << Log(groups[g]) << m_End;
+	      m_Log << " Group:" << Log(groups[g]) << LogEnd;
 	      return false;
 	    }
 	    m_ChildStates[&GetChildFrame(c)].Add(state);
 	    break;
 	  }
+	}
+      }
     }  
-    
     return true;
   }
-  
+
   bool ReconstructionFrame::InitializeAnalysisRecursive(){
     if(!IsSoundBody()){
       UnSoundBody(RF_FUNCTION);
@@ -199,11 +231,15 @@ namespace RestFrames {
       if(!GetChildFrame(i).InitializeAnalysisRecursive()){
 	m_Log << LogWarning;
 	m_Log << "Unable to recursively initialize analysis for frame:";
-	m_Log << Log(GetChildFrame(i)) << m_End;
+	m_Log << Log(GetChildFrame(i)) << LogEnd;
 	return SetMind(false);
       }
 
     return SetMind(true);
+  }
+
+  bool ReconstructionFrame::ResetRecoFrame(){
+    return true;
   }
 
   bool ReconstructionFrame::ClearEventRecursive(){ 
@@ -212,6 +248,9 @@ namespace RestFrames {
       return false;
     }
    
+    if(!ResetRecoFrame())
+      return false;
+
     int Nf =  GetNChildren();
     for(int i = 0; i < Nf; i++)
       if(!GetChildFrame(i).ClearEventRecursive())
@@ -220,44 +259,68 @@ namespace RestFrames {
     return true;
   }
 
+  bool ReconstructionFrame::ReconstructFrame(){
+    if(!IsSoundMind()){
+      UnSoundMind(RF_FUNCTION);
+      return SetSpirit(false);
+    }
+
+    TLorentzVector Ptot(0,0,0,0);
+    
+    int Nchild = GetNChildren();
+    for(int i = 0; i < Nchild; i++){
+      ReconstructionFrame& child = GetChildFrame(i);
+      
+      TLorentzVector P = m_ChildStates[&child].GetFourVector();
+      if(P.M() > 0.)
+	SetChildBoostVector(child, P.BoostVector());
+      else
+	SetChildBoostVector(child, m_Empty3Vector);
+      Ptot += P;
+      
+      child.SetFourVector(P,*this);
+
+      if(child.IsVisibleFrame())
+	static_cast<VisibleRecoFrame&>(child).
+	  SetCharge(m_ChildStates[&child].GetCharge());
+    }
+
+    if(IsLabFrame()) SetFourVector(Ptot,*this);
+
+    return SetSpirit(true);
+  }
+
   bool ReconstructionFrame::AnalyzeEventRecursive(){
     if(!IsSoundMind()){
       UnSoundMind(RF_FUNCTION);
       return SetSpirit(false);
     }
-    
-    TLorentzVector Ptot(0,0,0,0);
+    if(!ReconstructFrame()){
+      m_Log << LogWarning;
+      m_Log << "Unable to reconstruct event for this frame.";
+      m_Log << LogEnd;
+      return SetSpirit(false);
+    }
 
     int Nchild = GetNChildren();
     for(int i = 0; i < Nchild; i++){
       ReconstructionFrame& child = GetChildFrame(i);
-      TLorentzVector P = m_ChildStates[&child].GetFourVector();
-      TVector3 B_child = P.BoostVector();
-      SetChildBoostVector(child, B_child);
-      Ptot += P;
+      TVector3 boost = GetChildBoostVector(child);
 
-      child.SetFourVector(P,*this);
       bool terminal = child.IsVisibleFrame() || child.IsInvisibleFrame();
-
-      if(!terminal){ 
-	B_child *= -1.;
-	m_ChildStates[&child].Boost(B_child);
+      if(!terminal){
+	boost *= -1.;
+	m_ChildStates[&child].Boost(boost);
       }
     
-      if(!child.AnalyzeEventRecursive()){
-	m_Log << LogWarning;
-	m_Log << "Recursive event analysis failed for frame: ";
-	m_Log << Log(child) << m_End;
+      if(!child.AnalyzeEventRecursive())
 	return SetSpirit(false);
-      } 
      
       if(!terminal){ 
-	B_child *= -1.;
-	m_ChildStates[&child].Boost(B_child);
+	boost *= -1.;
+	m_ChildStates[&child].Boost(boost);
       }
     }
-   
-    if(IsLabFrame()) SetFourVector(Ptot,*this);
 
     return SetSpirit(true);
   }

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   DecayGenFrame.hh
@@ -33,72 +33,52 @@
 #include "RestFrames/DecayFrame.hh"
 #include "RestFrames/GeneratorFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class ResonanceGenFrame;
-
-   enum DecayGenType { DGVanilla, DGResonance };
 
   ///////////////////////////////////////////////
   // DecayGenFrame class
   ///////////////////////////////////////////////
   class DecayGenFrame : public DecayFrame<GeneratorFrame> {
   public:
-    DecayGenFrame(const string& sname, const string& stitle);
+    DecayGenFrame(const std::string& sname, const std::string& stitle);
+    DecayGenFrame();
     virtual ~DecayGenFrame();
 
     virtual void SetMass(double val);
-    virtual double GetMass() const;
-    
-    bool IsResonanceFrame() const;
+    virtual void SetVariableMass(bool varymass = true);
 
     // For two-body decays
-    virtual void SetChildMomentum(double val);
-    virtual void SetChildGamma(double val);
     virtual void SetCosDecayAngle(double val);
     virtual void SetDeltaPhiDecayPlane(double val);
 
+    virtual double GetProbMCMC(double mass = -1.) const;
+    virtual void GenerateMassMCMC(double& mass, double& prob, 
+				  double max = -1.) const;
+
   protected:
-    mutable double m_Mass;
-    mutable bool m_MassSet;
-  
-    DecayGenType m_GType;
-
-    bool m_MarkovChainMC;
-    RestFrames::RFList<ResonanceGenFrame> m_Resonances;
-    double m_ResPrevMTOT;
-    map<const RestFrame*, int>    m_ResIndex;
-    map<const RestFrame*, double> m_ResPrevProb;
-    map<const RestFrame*, double> m_ResPrevMass;
-    
-    bool m_Burnt;
-    static int m_N_MCMC_BurnIn;
-    bool MCMC_BurnIn();
-    bool MCMC_Generate();
-
-    // For two-body decays
-    double m_ChildP;
-    double m_ChildGamma;
     double m_CosDecayAngle;
     double m_DeltaPhiDecayPlane;
 
+    std::vector<int>    m_ChildIndexMCMC;
+    std::vector<double> m_ChildMassMCMC;
+    std::vector<double> m_ChildProbMCMC;
+    std::vector<double> m_InterMassFracMCMC;
+
     virtual bool IsSoundBody() const;
 
-    virtual void ResetFrame();
+    virtual void ResetGenFrame();
     virtual bool GenerateFrame();
-
-    void ResetDecayAngles();
    
-    double GenerateTwoBodyMasses(double M, const vector<double>& M_c, vector<double>& M_2b);
-    double GenerateTwoBodyRecursive(const vector<double>& M_parent, const vector<double>& M_child,
-				    const TVector3& axis_par, const TVector3& axis_perp,
-				    vector<TLorentzVector>& P_child);
-    virtual bool InitializeGenAnalysis();
+    void GenerateTwoBodyRecursive(const std::vector<double>& M_parent, 
+				  const std::vector<double>& M_child,
+				  const TVector3& axis_par, 
+				  const TVector3& axis_perp,
+				  std::vector<TLorentzVector>& P_child);
 
-  private:
-    void Init();
+    virtual bool InitializeGenAnalysis();
+    virtual bool IterateMCMC();
 
   };
 

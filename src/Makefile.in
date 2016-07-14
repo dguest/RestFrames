@@ -133,10 +133,12 @@ libRestFrames_la_LIBADD =
 am_libRestFrames_la_OBJECTS = libRestFrames_la-RestFrames_Dict.lo \
 	libRestFrames_la-RFBase.lo libRestFrames_la-RFKey.lo \
 	libRestFrames_la-RFList.lo libRestFrames_la-RFLog.lo \
-	libRestFrames_la-RFPlot.lo libRestFrames_la-TreePlot.lo \
-	libRestFrames_la-TreePlotNode.lo \
+	libRestFrames_la-RFPlot.lo libRestFrames_la-RFCharge.lo \
+	libRestFrames_la-TreePlot.lo libRestFrames_la-TreePlotNode.lo \
 	libRestFrames_la-TreePlotLink.lo libRestFrames_la-HistPlot.lo \
-	libRestFrames_la-HistPlotVar.lo libRestFrames_la-RestFrame.lo \
+	libRestFrames_la-HistPlotVar.lo \
+	libRestFrames_la-HistPlotCategory.lo \
+	libRestFrames_la-RestFrame.lo \
 	libRestFrames_la-ReconstructionFrame.lo \
 	libRestFrames_la-GeneratorFrame.lo \
 	libRestFrames_la-LabFrame.lo libRestFrames_la-DecayFrame.lo \
@@ -152,7 +154,8 @@ am_libRestFrames_la_OBJECTS = libRestFrames_la-RestFrames_Dict.lo \
 	libRestFrames_la-VisibleGenFrame.lo \
 	libRestFrames_la-InvisibleGenFrame.lo \
 	libRestFrames_la-ResonanceGenFrame.lo \
-	libRestFrames_la-State.lo libRestFrames_la-VisibleState.lo \
+	libRestFrames_la-ppLabGenFrame.lo libRestFrames_la-State.lo \
+	libRestFrames_la-VisibleState.lo \
 	libRestFrames_la-InvisibleState.lo \
 	libRestFrames_la-CombinatoricState.lo \
 	libRestFrames_la-Group.lo libRestFrames_la-InvisibleGroup.lo \
@@ -162,7 +165,15 @@ am_libRestFrames_la_OBJECTS = libRestFrames_la-RestFrames_Dict.lo \
 	libRestFrames_la-SetMassInvJigsaw.lo \
 	libRestFrames_la-SetRapidityInvJigsaw.lo \
 	libRestFrames_la-ContraBoostInvJigsaw.lo \
-	libRestFrames_la-MinMassesCombJigsaw.lo
+	libRestFrames_la-CombinedCBInvJigsaw.lo \
+	libRestFrames_la-MinMassDiffInvJigsaw.lo \
+	libRestFrames_la-MinMassesSqInvJigsaw.lo \
+	libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo \
+	libRestFrames_la-MinMassesCombJigsaw.lo \
+	libRestFrames_la-MinMassChi2CombJigsaw.lo \
+	libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo \
+	libRestFrames_la-MinMassDiffCombJigsaw.lo \
+	libRestFrames_la-MinMassesSqCombJigsaw.lo
 libRestFrames_la_OBJECTS = $(am_libRestFrames_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -408,20 +419,23 @@ RestFrameslib_LTLIBRARIES = libRestFrames.la
 libRestFrames_la_CXXFLAGS = -I../inc -I$(includestuff) $(AM_CXXFLAGS) $(ROOTCXXFLAGS) $(ROOTAUXCXXFLAGS)
 libRestFrames_la_LDFLAGS = $(ROOTLDFLAGS) -version-info $(SOVERSION)
 libRestFrames_la_SOURCES = RestFrames_Dict.cxx RestFrames_Dict.h\
-	RFBase.cc RFKey.cc RFList.cc RFLog.cc RFPlot.cc\
+	RFBase.cc RFKey.cc RFList.cc RFLog.cc RFPlot.cc RFCharge.cc\
 	TreePlot.cc TreePlotNode.cc TreePlotLink.cc\
-	HistPlot.cc HistPlotVar.cc\
+	HistPlot.cc HistPlotVar.cc HistPlotCategory.cc\
 	RestFrame.cc ReconstructionFrame.cc GeneratorFrame.cc\
 	LabFrame.cc DecayFrame.cc VisibleFrame.cc InvisibleFrame.cc\
 	LabRecoFrame.cc DecayRecoFrame.cc VisibleRecoFrame.cc InvisibleRecoFrame.cc\
 	SelfAssemblingRecoFrame.cc\
 	LabGenFrame.cc DecayGenFrame.cc VisibleGenFrame.cc InvisibleGenFrame.cc\
-	ResonanceGenFrame.cc\
+	ResonanceGenFrame.cc ppLabGenFrame.cc\
 	State.cc VisibleState.cc InvisibleState.cc CombinatoricState.cc\
 	Group.cc InvisibleGroup.cc CombinatoricGroup.cc\
 	Jigsaw.cc InvisibleJigsaw.cc CombinatoricJigsaw.cc\
 	SetMassInvJigsaw.cc SetRapidityInvJigsaw.cc ContraBoostInvJigsaw.cc\
-	MinMassesCombJigsaw.cc
+	CombinedCBInvJigsaw.cc MinMassDiffInvJigsaw.cc MinMassesSqInvJigsaw.cc\
+	MaxProbBreitWignerInvJigsaw.cc\
+	MinMassesCombJigsaw.cc MinMassChi2CombJigsaw.cc MaxProbBreitWignerCombJigsaw.cc\
+	MinMassDiffCombJigsaw.cc MinMassesSqCombJigsaw.cc
 
 CLEANFILES = *Dict.cxx *Dict.h *~
 ROOTLDFLAGS = -L@ROOTLIBDIR@ @ROOTLIBS@ @ROOTAUXLIBS@
@@ -510,6 +524,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-CombinatoricGroup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-CombinatoricJigsaw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-CombinatoricState.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-CombinedCBInvJigsaw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-ContraBoostInvJigsaw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-DecayFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-DecayGenFrame.Plo@am__quote@
@@ -517,6 +532,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-GeneratorFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-Group.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-HistPlot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-HistPlotCategory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-HistPlotVar.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-InvisibleFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-InvisibleGenFrame.Plo@am__quote@
@@ -528,8 +544,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-LabFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-LabGenFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-LabRecoFrame.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MaxProbBreitWignerCombJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MaxProbBreitWignerInvJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassChi2CombJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassDiffCombJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassDiffInvJigsaw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassesCombJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassesSqCombJigsaw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-MinMassesSqInvJigsaw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-RFBase.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-RFCharge.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-RFKey.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-RFList.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-RFLog.Plo@am__quote@
@@ -549,6 +573,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-VisibleGenFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-VisibleRecoFrame.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-VisibleState.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libRestFrames_la-ppLabGenFrame.Plo@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -613,6 +638,13 @@ libRestFrames_la-RFPlot.lo: RFPlot.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-RFPlot.lo `test -f 'RFPlot.cc' || echo '$(srcdir)/'`RFPlot.cc
 
+libRestFrames_la-RFCharge.lo: RFCharge.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-RFCharge.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-RFCharge.Tpo -c -o libRestFrames_la-RFCharge.lo `test -f 'RFCharge.cc' || echo '$(srcdir)/'`RFCharge.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-RFCharge.Tpo $(DEPDIR)/libRestFrames_la-RFCharge.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='RFCharge.cc' object='libRestFrames_la-RFCharge.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-RFCharge.lo `test -f 'RFCharge.cc' || echo '$(srcdir)/'`RFCharge.cc
+
 libRestFrames_la-TreePlot.lo: TreePlot.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-TreePlot.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-TreePlot.Tpo -c -o libRestFrames_la-TreePlot.lo `test -f 'TreePlot.cc' || echo '$(srcdir)/'`TreePlot.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-TreePlot.Tpo $(DEPDIR)/libRestFrames_la-TreePlot.Plo
@@ -647,6 +679,13 @@ libRestFrames_la-HistPlotVar.lo: HistPlotVar.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='HistPlotVar.cc' object='libRestFrames_la-HistPlotVar.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-HistPlotVar.lo `test -f 'HistPlotVar.cc' || echo '$(srcdir)/'`HistPlotVar.cc
+
+libRestFrames_la-HistPlotCategory.lo: HistPlotCategory.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-HistPlotCategory.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-HistPlotCategory.Tpo -c -o libRestFrames_la-HistPlotCategory.lo `test -f 'HistPlotCategory.cc' || echo '$(srcdir)/'`HistPlotCategory.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-HistPlotCategory.Tpo $(DEPDIR)/libRestFrames_la-HistPlotCategory.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='HistPlotCategory.cc' object='libRestFrames_la-HistPlotCategory.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-HistPlotCategory.lo `test -f 'HistPlotCategory.cc' || echo '$(srcdir)/'`HistPlotCategory.cc
 
 libRestFrames_la-RestFrame.lo: RestFrame.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-RestFrame.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-RestFrame.Tpo -c -o libRestFrames_la-RestFrame.lo `test -f 'RestFrame.cc' || echo '$(srcdir)/'`RestFrame.cc
@@ -767,6 +806,13 @@ libRestFrames_la-ResonanceGenFrame.lo: ResonanceGenFrame.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-ResonanceGenFrame.lo `test -f 'ResonanceGenFrame.cc' || echo '$(srcdir)/'`ResonanceGenFrame.cc
 
+libRestFrames_la-ppLabGenFrame.lo: ppLabGenFrame.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-ppLabGenFrame.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-ppLabGenFrame.Tpo -c -o libRestFrames_la-ppLabGenFrame.lo `test -f 'ppLabGenFrame.cc' || echo '$(srcdir)/'`ppLabGenFrame.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-ppLabGenFrame.Tpo $(DEPDIR)/libRestFrames_la-ppLabGenFrame.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ppLabGenFrame.cc' object='libRestFrames_la-ppLabGenFrame.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-ppLabGenFrame.lo `test -f 'ppLabGenFrame.cc' || echo '$(srcdir)/'`ppLabGenFrame.cc
+
 libRestFrames_la-State.lo: State.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-State.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-State.Tpo -c -o libRestFrames_la-State.lo `test -f 'State.cc' || echo '$(srcdir)/'`State.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-State.Tpo $(DEPDIR)/libRestFrames_la-State.Plo
@@ -858,12 +904,68 @@ libRestFrames_la-ContraBoostInvJigsaw.lo: ContraBoostInvJigsaw.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-ContraBoostInvJigsaw.lo `test -f 'ContraBoostInvJigsaw.cc' || echo '$(srcdir)/'`ContraBoostInvJigsaw.cc
 
+libRestFrames_la-CombinedCBInvJigsaw.lo: CombinedCBInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-CombinedCBInvJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-CombinedCBInvJigsaw.Tpo -c -o libRestFrames_la-CombinedCBInvJigsaw.lo `test -f 'CombinedCBInvJigsaw.cc' || echo '$(srcdir)/'`CombinedCBInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-CombinedCBInvJigsaw.Tpo $(DEPDIR)/libRestFrames_la-CombinedCBInvJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CombinedCBInvJigsaw.cc' object='libRestFrames_la-CombinedCBInvJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-CombinedCBInvJigsaw.lo `test -f 'CombinedCBInvJigsaw.cc' || echo '$(srcdir)/'`CombinedCBInvJigsaw.cc
+
+libRestFrames_la-MinMassDiffInvJigsaw.lo: MinMassDiffInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassDiffInvJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassDiffInvJigsaw.Tpo -c -o libRestFrames_la-MinMassDiffInvJigsaw.lo `test -f 'MinMassDiffInvJigsaw.cc' || echo '$(srcdir)/'`MinMassDiffInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassDiffInvJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassDiffInvJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassDiffInvJigsaw.cc' object='libRestFrames_la-MinMassDiffInvJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassDiffInvJigsaw.lo `test -f 'MinMassDiffInvJigsaw.cc' || echo '$(srcdir)/'`MinMassDiffInvJigsaw.cc
+
+libRestFrames_la-MinMassesSqInvJigsaw.lo: MinMassesSqInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassesSqInvJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassesSqInvJigsaw.Tpo -c -o libRestFrames_la-MinMassesSqInvJigsaw.lo `test -f 'MinMassesSqInvJigsaw.cc' || echo '$(srcdir)/'`MinMassesSqInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassesSqInvJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassesSqInvJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassesSqInvJigsaw.cc' object='libRestFrames_la-MinMassesSqInvJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassesSqInvJigsaw.lo `test -f 'MinMassesSqInvJigsaw.cc' || echo '$(srcdir)/'`MinMassesSqInvJigsaw.cc
+
+libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo: MaxProbBreitWignerInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerInvJigsaw.Tpo -c -o libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo `test -f 'MaxProbBreitWignerInvJigsaw.cc' || echo '$(srcdir)/'`MaxProbBreitWignerInvJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerInvJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerInvJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MaxProbBreitWignerInvJigsaw.cc' object='libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MaxProbBreitWignerInvJigsaw.lo `test -f 'MaxProbBreitWignerInvJigsaw.cc' || echo '$(srcdir)/'`MaxProbBreitWignerInvJigsaw.cc
+
 libRestFrames_la-MinMassesCombJigsaw.lo: MinMassesCombJigsaw.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassesCombJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassesCombJigsaw.Tpo -c -o libRestFrames_la-MinMassesCombJigsaw.lo `test -f 'MinMassesCombJigsaw.cc' || echo '$(srcdir)/'`MinMassesCombJigsaw.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassesCombJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassesCombJigsaw.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassesCombJigsaw.cc' object='libRestFrames_la-MinMassesCombJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassesCombJigsaw.lo `test -f 'MinMassesCombJigsaw.cc' || echo '$(srcdir)/'`MinMassesCombJigsaw.cc
+
+libRestFrames_la-MinMassChi2CombJigsaw.lo: MinMassChi2CombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassChi2CombJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassChi2CombJigsaw.Tpo -c -o libRestFrames_la-MinMassChi2CombJigsaw.lo `test -f 'MinMassChi2CombJigsaw.cc' || echo '$(srcdir)/'`MinMassChi2CombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassChi2CombJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassChi2CombJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassChi2CombJigsaw.cc' object='libRestFrames_la-MinMassChi2CombJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassChi2CombJigsaw.lo `test -f 'MinMassChi2CombJigsaw.cc' || echo '$(srcdir)/'`MinMassChi2CombJigsaw.cc
+
+libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo: MaxProbBreitWignerCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerCombJigsaw.Tpo -c -o libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo `test -f 'MaxProbBreitWignerCombJigsaw.cc' || echo '$(srcdir)/'`MaxProbBreitWignerCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerCombJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MaxProbBreitWignerCombJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MaxProbBreitWignerCombJigsaw.cc' object='libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MaxProbBreitWignerCombJigsaw.lo `test -f 'MaxProbBreitWignerCombJigsaw.cc' || echo '$(srcdir)/'`MaxProbBreitWignerCombJigsaw.cc
+
+libRestFrames_la-MinMassDiffCombJigsaw.lo: MinMassDiffCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassDiffCombJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassDiffCombJigsaw.Tpo -c -o libRestFrames_la-MinMassDiffCombJigsaw.lo `test -f 'MinMassDiffCombJigsaw.cc' || echo '$(srcdir)/'`MinMassDiffCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassDiffCombJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassDiffCombJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassDiffCombJigsaw.cc' object='libRestFrames_la-MinMassDiffCombJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassDiffCombJigsaw.lo `test -f 'MinMassDiffCombJigsaw.cc' || echo '$(srcdir)/'`MinMassDiffCombJigsaw.cc
+
+libRestFrames_la-MinMassesSqCombJigsaw.lo: MinMassesSqCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -MT libRestFrames_la-MinMassesSqCombJigsaw.lo -MD -MP -MF $(DEPDIR)/libRestFrames_la-MinMassesSqCombJigsaw.Tpo -c -o libRestFrames_la-MinMassesSqCombJigsaw.lo `test -f 'MinMassesSqCombJigsaw.cc' || echo '$(srcdir)/'`MinMassesSqCombJigsaw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libRestFrames_la-MinMassesSqCombJigsaw.Tpo $(DEPDIR)/libRestFrames_la-MinMassesSqCombJigsaw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='MinMassesSqCombJigsaw.cc' object='libRestFrames_la-MinMassesSqCombJigsaw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libRestFrames_la_CXXFLAGS) $(CXXFLAGS) -c -o libRestFrames_la-MinMassesSqCombJigsaw.lo `test -f 'MinMassesSqCombJigsaw.cc' || echo '$(srcdir)/'`MinMassesSqCombJigsaw.cc
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

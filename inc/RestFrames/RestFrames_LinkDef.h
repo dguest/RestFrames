@@ -1,11 +1,11 @@
 #ifdef __ROOTCLING__
-//#include "RestFrames/RFLog.hh"
 #include "RestFrames/RestFrames.hh"
 #pragma link C++ namespace RestFrames;
 using namespace RestFrames;
 
 #pragma link C++ class RFBase;
 #pragma link C++ class RFKey;
+#pragma link C++ class RFCharge;
 
 #pragma link C++ class RFList<RFBase>;
 #pragma link C++ class RFList<RestFrame>;
@@ -73,6 +73,8 @@ using namespace RestFrames;
 
 #pragma link C++ class RFBase+;
 #pragma link C++ class RFKey+;
+#pragma link C++ class RFCharge+;
+
 #pragma link C++ class RFList<RFBase>+;
 #pragma link C++ class RFList<RestFrame>+; 
 #pragma link C++ class RFList<const RestFrame>+;

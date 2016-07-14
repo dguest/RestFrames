@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleState.hh
@@ -32,8 +32,6 @@
 
 #include "RestFrames/State.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
@@ -41,7 +39,7 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class InvisibleState : public State {
   public:
-    InvisibleState(const string& sname, const string& stitle);
+    InvisibleState(const std::string& sname, const std::string& stitle);
     InvisibleState();
     virtual ~InvisibleState();
 
@@ -49,17 +47,15 @@ namespace RestFrames {
 
     virtual void Clear();
 
-    virtual void AddFrame(RestFrame& frame);
+    virtual void AddFrame(const RestFrame& frame);
 
     virtual void SetParentJigsaw(Jigsaw& jigsaw);
     virtual void SetChildJigsaw(Jigsaw& jigsaw);
 
     virtual double GetMinimumMass() const;
-    virtual void FillInvisibleMassJigsawDependancies(RestFrames::RFList<Jigsaw>& jigsaws) const;
 
   private:
     static InvisibleState m_Empty;
-    void Init();
  
   };
 

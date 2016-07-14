@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   GeneratorFrame.hh
@@ -31,9 +31,8 @@
 #define GeneratorFrame_HH
 
 #include <TRandom.h>
-#include "RestFrames/RestFrame.hh"
 
-using namespace std;
+#include "RestFrames/RestFrame.hh"
 
 namespace RestFrames {
 
@@ -42,17 +41,12 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class GeneratorFrame : public RestFrame {
   public:
-    GeneratorFrame(const string& sname, const string& stitle);
+    GeneratorFrame(const std::string& sname, const std::string& stitle);
     GeneratorFrame();
     virtual ~GeneratorFrame();
 
+    /// \brief Clears GeneratorFrame of all connections to other objects
     virtual void Clear();
-
-    static GeneratorFrame& Empty();
-
-    virtual bool InitializeAnalysisRecursive();
-    virtual bool ClearEventRecursive();
-    virtual bool AnalyzeEventRecursive();
 
     /// \brief Add a child RestFrame to this frame
     ///
@@ -80,21 +74,78 @@ namespace RestFrames {
     virtual GeneratorFrame const& GetParentFrame() const;
 
     /// \brief Get the frame of the *i* th child
-    virtual GeneratorFrame& GetChildFrame(int i) const;
+    virtual GeneratorFrame& GetChildFrame(int i = 0) const;
+
+    void SetPCut(double cut);
+    void SetPtCut(double cut);
+    void SetEtaCut(double cut);
+    void SetMassWindowCut(double min, double max);
+
+    void RemovePCut();
+    void RemovePtCut();
+    void RemoveEtaCut();
+    void RemoveMassWindowCut();
+
+    /// \brief Print generator efficiency information
+    void PrintGeneratorEfficiency() const;
+    
+    /// \brief Get the mass of this frame
+    virtual double GetMass() const;
+
+    /// \brief Frame is capable having a variable mass? (true/false)
+    bool IsVariableMassMCMC() const;
+
+    virtual double GetMinimumMassMCMC() const;
+    virtual void GenerateMassMCMC(double& mass, double& prob, 
+				  double max = -1.) const;
+    virtual double GetProbMCMC(double mass = -1.) const;
+
+    static GeneratorFrame& Empty();
 
   protected:
-    virtual void ResetFrame(){ }
-    virtual bool GenerateFrame(){ return false; }
+    double m_Mass;
 
-    void SetChildren(const vector<TLorentzVector>& P_children);
+    bool InitializeAnalysisRecursive();
+    bool AnalyzeEventRecursive();
+    bool ClearEventRecursive();
+
+    virtual void ResetGenFrame() = 0;
+    virtual bool GenerateFrame() = 0;
+
+    void SetChildren(const std::vector<TLorentzVector>& P_children);
     virtual bool InitializeGenAnalysis();
 
     double GetRandom() const;
     double GetGaus(double mu, double sig) const;
 
+    virtual bool IterateMCMC();
+    bool IterateRecursiveMCMC();
+
+    void SetVariableMassMCMC(bool var = true);
+    virtual void SetMassMCMC(double mass);
+    void SetMassMCMC(double mass, GeneratorFrame& frame) const;
+
+    bool EventInAcceptance() const;
+
   private:
-    void Init();
     TRandom *m_Random;
+    bool m_VarMassMCMC;
+
+    mutable long m_Ngen;
+    mutable long m_Npass;
+
+    double m_PCut;
+    double m_PtCut;
+    double m_EtaCut;
+    double m_minMassCut;
+    double m_maxMassCut;
+
+    bool m_doCuts;
+    bool m_doPCut;
+    bool m_doPtCut;
+    bool m_doEtaCut;
+    bool m_dominMassCut;
+    bool m_domaxMassCut;
    
   };
 

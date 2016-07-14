@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   State.hh
@@ -31,9 +31,8 @@
 #define State_HH
 
 #include "RestFrames/RFBase.hh"
+#include "RestFrames/RFCharge.hh"
 #include "RestFrames/Jigsaw.hh"
-
-using namespace std;
 
 namespace RestFrames {
 
@@ -44,58 +43,61 @@ namespace RestFrames {
 
   class State : public RFBase {
   public:
-    State(const string& sname, const string& stitle);
+    State(const std::string& sname, const std::string& stitle);
     State();
     virtual ~State();
 
     virtual void Clear();
 
-    static State& Empty();
-
     /// \brief Returns State (*StateType*) type 
     StateType GetType() const;
     
-    /// \brief Is this a VisibleState? (yes/no)
+    /// \brief Is this a VisibleState? (true/false)
     bool IsVisibleState() const;
     
-    /// \brief Is this an InvisibleState? (yes/no)
+    /// \brief Is this an InvisibleState? (true/false)
     bool IsInvisibleState() const;
 
-    /// \brief Is this a CombinatoricState? (yes/no)
+    /// \brief Is this a CombinatoricState? (true/false)
     bool IsCombinatoricState() const;
 
-    virtual void AddFrame(RestFrame& frame) = 0;
-    virtual void AddFrames(const RestFrames::RFList<RestFrame>& frames);
+    virtual void AddFrame(const RestFrame& frame) = 0;
+    virtual void AddFrames(const ConstRestFrameList& frames);
 
-    RestFrames::RFList<RestFrame> const& GetListFrames() const;
+    ConstRestFrameList const& GetListFrames() const;
     int GetNFrames() const;
 
     virtual bool IsFrame(const RestFrame& frame) const;
-    virtual bool IsFrames(const RestFrames::RFList<RestFrame>& frames) const;
+    virtual bool IsFrames(const ConstRestFrameList& frames) const;
 
     virtual void SetParentJigsaw(Jigsaw& jigsaw = Jigsaw::Empty());
     virtual void SetChildJigsaw(Jigsaw& jigsaw = Jigsaw::Empty());
-    virtual Jigsaw const& GetParentJigsaw() const;
-    virtual Jigsaw const& GetChildJigsaw() const;
+    virtual Jigsaw& GetParentJigsaw() const;
+    virtual Jigsaw& GetChildJigsaw() const;
 
     virtual void Boost(const TVector3& B);
     virtual void SetFourVector(const TLorentzVector& V);
-    virtual TLorentzVector GetFourVector() const; 
+    virtual TLorentzVector GetFourVector() const;
+    virtual RFCharge GetCharge() const;
 
-    void FillGroupJigsawDependancies(RestFrames::RFList<Jigsaw>& jigsaws) const;
-    void FillStateJigsawDependancies(RestFrames::RFList<Jigsaw>& jigsaws) const;
-	
+    static State& Empty();
+    static StateList const& EmptyList();
+    
   protected:
     StateType m_Type;
+    RFCharge m_Charge;
 
-    RestFrames::RFList<RestFrame> m_Frames;
+    ConstRestFrameList m_Frames;
 
   private:
     TLorentzVector m_P;
+    
     Jigsaw* m_ParentJigsawPtr;
     Jigsaw* m_ChildJigsawPtr;
     
     static int m_class_key;
+
+    static const StateList m_EmptyList;
 
   };
 

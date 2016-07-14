@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   SetMassInvJigsaw.cc
@@ -29,14 +29,13 @@
 
 #include "RestFrames/SetMassInvJigsaw.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   //SetMassInvJigsaw class methods
   ///////////////////////////////////////////////
-  SetMassInvJigsaw::SetMassInvJigsaw(const string& sname, const string& stitle) : 
+  SetMassInvJigsaw::SetMassInvJigsaw(const std::string& sname, 
+				     const std::string& stitle) : 
     InvisibleJigsaw(sname, stitle, 1, 0) {}
 
   SetMassInvJigsaw::SetMassInvJigsaw() : InvisibleJigsaw() {}
@@ -56,12 +55,17 @@ namespace RestFrames {
       return SetSpirit(false);
     
     TLorentzVector inv_P = GetParentState().GetFourVector();
-    double M = GetChildState(0).GetMinimumMass();
+    double M = std::max(0.,GetChildState(0).GetMinimumMass());
     
     inv_P.SetVectM(inv_P.Vect(),M);
     GetChildState(0).SetFourVector(inv_P);
 
     return SetSpirit(true);
+  }
+
+  void SetMassInvJigsaw::FillStateJigsawDependancies(JigsawList& jigsaws) const {
+    Jigsaw::FillStateJigsawDependancies(jigsaws);
+    FillInvisibleMassJigsawDependancies(jigsaws);
   }
 
   SetMassInvJigsaw SetMassInvJigsaw::m_Empty;

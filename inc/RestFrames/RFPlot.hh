@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFPlot.hh
@@ -31,31 +31,88 @@
 #define RFPlot_HH
 
 #include <TCanvas.h>
+#include <TColor.h>
+#include <TFile.h>
 
 #include "RestFrames/RFBase.hh"
-
-using namespace std;
 
 namespace RestFrames {
 
   class RFPlot : public RFBase {
   public:
-    RFPlot(const string& sname, const string& stitle);
+    RFPlot(const std::string& sname, const std::string& stitle);
     ~RFPlot();
 
     virtual void Clear();
 
-    void WriteOutput(const string& filename);
+    void WriteOutput(const std::string& filename);
 
+    static void SetStyle(bool invert_colors = false);
+    static void SetZPalette(bool invert_colors = false);
+    
+    static const TColor rf_blue0;
+    static const TColor rf_blue1;
+    static const TColor rf_blue2;
+    static const TColor rf_blue3;
+    static const TColor rf_blue4;
+    static const TColor rf_green0;
+    static const TColor rf_green1;
+    static const TColor rf_green2;
+    static const TColor rf_green3;
+    static const TColor rf_green4;
+    static const TColor rf_red0;
+    static const TColor rf_red1;
+    static const TColor rf_red2;
+    static const TColor rf_red3;
+    static const TColor rf_red4;
+    static const TColor rf_yellow0;
+    static const TColor rf_yellow1;
+    static const TColor rf_yellow2;
+    static const TColor rf_yellow3;
+    static const TColor rf_yellow4;
+    static const TColor rf_cyan0;
+    static const TColor rf_cyan1;
+    static const TColor rf_cyan2;
+    static const TColor rf_cyan3;
+    static const TColor rf_cyan4;
+    static const TColor rf_lime0;
+    static const TColor rf_lime1;
+    static const TColor rf_lime2;
+    static const TColor rf_lime3;
+    static const TColor rf_lime4;
+    static const TColor rf_purple0;
+    static const TColor rf_purple1;
+    static const TColor rf_purple2;
+    static const TColor rf_purple3;
+    static const TColor rf_purple4;
+    static const TColor rf_orange0;
+    static const TColor rf_orange1;
+    static const TColor rf_orange2;
+    static const TColor rf_orange3;
+    static const TColor rf_orange4;
+    
   protected:
     TCanvas* m_CanvasPtr;
     void AddCanvas(TCanvas* can);
     void AddTObject(TObject* obj);
     int GetNCanvases();
+    std::string GetUniqueName(const std::string& name);
     
   private:
-    vector<TObject*> m_TObjects;
-    vector<TCanvas*> m_Canvases;
+    std::vector<TObject*> m_TObjects;
+    std::vector<TCanvas*> m_Canvases;
+
+    static const int rf_NZPalette;
+    static int rf_ZPalette;
+    static int rf_iZPalette;
+    static double rf_zcolor_s[5];
+    static double rf_zcolor_r[5];
+    static double rf_zcolor_g[5];
+    static double rf_zcolor_b[5];
+    static double rf_zcolor_is[5];
+    static double rf_zcolor_ir[5];
+    static double rf_zcolor_ig[5];
+    static double rf_zcolor_ib[5];
 
   };
 

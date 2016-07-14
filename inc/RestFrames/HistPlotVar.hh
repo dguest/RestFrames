@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   HistPlotVar.hh
@@ -30,46 +30,55 @@
 #ifndef HistPlotVar_HH
 #define HistPlotVar_HH
 
-#include <string>
-
-using namespace std;
+#include "RestFrames/RFBase.hh"
 
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // HistPlotVar class
   ///////////////////////////////////////////////
-  class HistPlotVar {
+  class HistPlotVar : public RFBase {
 
   public:
-    HistPlotVar(const string& name, const string& title, 
+    HistPlotVar(const std::string& name, 
+		const std::string& title, 
 		double minval, double maxval,
-		const string& unit);
+		const std::string& unit);
+    HistPlotVar();
     ~HistPlotVar();
 
-    void operator=(double val) const;
+    void operator = (double val) const;
+
+    void operator += (double val) const;
+
+    void operator -= (double val) const;
+
+    void operator *= (double val) const;
+
+    void operator /= (double val) const;
 
     operator double() const;
 
     double GetVal() const;
 
-    string GetName() const;
-
-    string GetTitle() const;
-
     double GetMin() const;
 
     double GetMax() const;
 
-    string GetUnit() const;
+    std::string GetUnit() const;
+
+    static HistPlotVar& Empty();
 
   private:
-    string m_Name;
-    string m_Title;
-    string m_Unit;
+    /// \brief HistPlotCategory ID key
+    static int m_class_key;
+
+    std::string m_Unit;
     double m_Min;
     double m_Max;
     mutable double m_Val;
+
+    static HistPlotVar m_Empty;
 
   };
 

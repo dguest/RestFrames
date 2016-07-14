@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleJigsaw.hh
@@ -34,46 +34,54 @@
 #include "RestFrames/InvisibleGroup.hh"
 #include "RestFrames/InvisibleState.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class InvisibleJigsaw : public Jigsaw {
   public:
-    InvisibleJigsaw(const string& sname, const string& stitle, int Ninv, int Nvis);
+    InvisibleJigsaw(const std::string& sname, 
+		    const std::string& stitle, 
+		    int Ninvisible, int Nvisible);
     InvisibleJigsaw();
     virtual ~InvisibleJigsaw();
 
     virtual void Clear();
 
-    static InvisibleJigsaw& Empty();
+    void SetGroup(Group& group = Group::Empty());
+    InvisibleGroup& GetGroup() const;
 
-    virtual void SetGroup(Group& group = Group::Empty());
-    virtual InvisibleGroup& GetGroup() const;
-
-    virtual void SetParentState(State& state = State::Empty());
-    virtual InvisibleState& GetParentState() const;
-    virtual InvisibleState& GetChildState(int i) const;
-
-    virtual void AddVisibleFrame(RestFrame& framePtr, int i = 0);
-    virtual void AddVisibleFrames(const RestFrames::RFList<RestFrame>& frames, int i = 0);
-    virtual void AddInvisibleFrame(RestFrame& framePtr, int i = 0);
-    virtual void AddInvisibleFrames(const RestFrames::RFList<RestFrame>& frames, int i = 0);
+    void AddVisibleFrame(const RestFrame& frame, int i = 0);
+    void AddVisibleFrames(const ConstRestFrameList& frames, int i = 0);
+    
+    void AddInvisibleFrame(const RestFrame& frame, int i = 0);
+    void AddInvisibleFrames(const ConstRestFrameList& frames, int i = 0);
+    
+    void AddMassFrame(const RestFrame& frame, int i = 0);
+    void AddMassFrames(const ConstRestFrameList& frames, int i = 0);
 
     virtual double GetMinimumMass() const;
-    virtual void FillInvisibleMassJigsawDependancies(RestFrames::RFList<Jigsaw>& jigsaws) const;
 
-    virtual bool InitializeDependancyJigsaws();
-    virtual bool InitializeJigsawExecutionList(RestFrames::RFList<Jigsaw>& exec_jigsaws);
+    static InvisibleJigsaw& Empty();
 
   protected:
+    bool m_InvMassDependancy;
+
     virtual bool IsSoundBody() const;
-    virtual InvisibleState& GetNewChildState();
+    InvisibleState& GetNewChildState();
+
+    void SetParentState(State& state = State::Empty());
+    InvisibleState const& GetParentState() const;
+    
+    InvisibleState& GetChildState(int i) const;
+
+    virtual bool InitializeAnalysis();
+    bool InitializeDependancyJigsaws();
+    bool InitializeJigsawExecutionList(JigsawList& exec_jigsaws);
+
+    virtual void FillInvisibleMassJigsawDependancies(JigsawList& jigsaws) const;
 
   private:
-    void Init(int Ninv, int Nvis);
-    int m_Nvis;
-    int m_Ninv;  
+    const int m_Nvis;
+    const int m_Ninv;  
   
   };
 

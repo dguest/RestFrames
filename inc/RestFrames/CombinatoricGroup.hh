@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricGroup.hh
@@ -34,27 +34,20 @@
 #include "RestFrames/VisibleState.hh"
 #include "RestFrames/CombinatoricState.hh"
 
-using namespace std;
-
 namespace RestFrames { 
 
   class CombinatoricGroup : public Group {
   public:
-    CombinatoricGroup(const string& sname, const string& stitle);
+    CombinatoricGroup(const std::string& sname, const std::string& stitle);
     CombinatoricGroup();
     virtual ~CombinatoricGroup();
 
     virtual void Clear();
 
-    static CombinatoricGroup& Empty();
-
     virtual void AddFrame(RestFrame& frame);
     virtual void AddJigsaw(Jigsaw& jigsaw);
 
-    virtual CombinatoricState& GetParentState() const;
-
-    virtual bool ClearEvent();
-    virtual bool AnalyzeEvent();
+    virtual void RemoveFrame(RestFrame& frame);
 
     virtual void SetNElementsForFrame(const RestFrame& frame, 
 				      int N, bool exclusive_N = false);
@@ -62,23 +55,38 @@ namespace RestFrames {
 				      int& N, bool& exclusive_N) const;
 
     // Event analysis functions
-    RFKey AddLabFrameFourVector(const TLorentzVector& V);
+    RFKey AddLabFrameFourVector(const TLorentzVector& V,
+				const RFCharge& charge = RFCharge());
+    RFKey AddLabFrameFourVector(const TLorentzVector& V,
+				int charge);
+    RFKey AddLabFrameFourVector(const TLorentzVector& V,
+				int charge_num, int charge_den);
 
     RestFrame const& GetFrame(const RFKey& key) const;
+
     TLorentzVector GetLabFrameFourVector(const RFKey& key) const;
+
     int GetNElementsInFrame(const RestFrame& frame) const;
-	
-  protected:
-    RestFrames::RFList<VisibleState>    m_Elements;
-    mutable map<const RestFrame*, int>  m_NElementsForFrame;
-    mutable map<const RestFrame*, bool> m_NExclusiveElementsForFrame; 
+
+    static CombinatoricGroup& Empty();
+    
+  protected: 
+    virtual bool ClearEvent();
+    virtual bool AnalyzeEvent();
 
     virtual CombinatoricState& InitializeParentState();
+    virtual CombinatoricState& GetParentState() const;
+    
     virtual CombinatoricState& GetChildState(int i) const;
 
   private:
+    VisibleStateList m_Elements;
+    mutable std::map<const RestFrame*, int>  m_NElementsForFrame;
+    mutable std::map<const RestFrame*, bool> m_NExclusiveElementsForFrame;
+
+    VisibleStateList m_InitStates;
     VisibleState& GetNewElement();
-    RestFrames::RFList<VisibleState> m_InitStates;
+    
 
     static CombinatoricGroup m_Empty;
 

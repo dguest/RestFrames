@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   VisibleFrame.hh
@@ -32,8 +32,6 @@
 
 #include "RestFrames/RestFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class RestFrame;
@@ -45,11 +43,23 @@ namespace RestFrames {
   class VisibleFrame : public T {
   public:
     //constructor and destructor
-    VisibleFrame(const string& sname, const string& stitle);
+    VisibleFrame(const std::string& sname,
+		 const std::string& stitle);
     VisibleFrame();
     virtual ~VisibleFrame();
 
-    virtual void SetLabFrameFourVector(const TLorentzVector& V);
+    virtual void SetCharge(const RFCharge& charge);
+    virtual void SetCharge(int charge = 0);
+    virtual void SetCharge(int charge_num, int charge_den);
+    virtual RFCharge GetCharge() const;
+
+    virtual void SetLabFrameFourVector(const TLorentzVector& V,
+				       const RFCharge& charge = RFCharge());
+    void SetLabFrameFourVector(const TLorentzVector& V, int charge);
+    void SetLabFrameFourVector(const TLorentzVector& V,
+			       int charge_num, int charge_den);
+    
+    
     virtual TLorentzVector GetLabFrameFourVector() const;
 
   protected:
@@ -57,6 +67,7 @@ namespace RestFrames {
 
   private:
     TLorentzVector m_Lab_P;
+    RFCharge m_Charge;
 
   };
 

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   SelfAssemblingRecoFrame.hh
@@ -33,46 +33,57 @@
 #include "RestFrames/DecayRecoFrame.hh"
 #include "RestFrames/State.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
+  class VisibleRecoFrame;
+  
   ///////////////////////////////////////////////
   // SelfAssemblingRecoFrame class
   ///////////////////////////////////////////////
   class SelfAssemblingRecoFrame : public DecayRecoFrame {
   public:
-    SelfAssemblingRecoFrame(const string& sname, const string& stitle);
+    SelfAssemblingRecoFrame(const std::string& sname, 
+			    const std::string& stitle);
     virtual ~SelfAssemblingRecoFrame();
 
     virtual void Clear();
 
-    virtual bool ClearEventRecursive();
-    virtual bool AnalyzeEventRecursive();
+    //virtual bool ClearEventRecursive();
+    //virtual bool AnalyzeEventRecursive();
+
+    void RemoveChildFrame(RestFrame& frame);
 
     const RestFrame& GetFrame(const RFKey& key) const;
 
-  private:
-    bool m_Body_UnAssembled;
-    bool m_Mind_UnAssembled; 
-    RestFrames::RFList<RestFrame> m_ChildFrames_UnAssembled;
-    vector<RestFrames::RFList<State> > m_ChildStates_UnAssembled;
+  protected:
+    virtual bool ResetRecoFrame();
+    virtual bool ReconstructFrame();
 
-    RestFrames::RFList<State> m_VisibleStates;
-    RestFrames::RFList<ReconstructionFrame> m_VisibleFrames;
-    RestFrames::RFList<ReconstructionFrame> m_DecayFrames;
+  private:
+    bool m_NewEvent;
+
+    RestFrameList m_ChildFrames_UnAssembled;
+
+    StateList m_VisibleStates;
+    RestFrames::RFList<VisibleRecoFrame> m_VisibleFrames;
+    RestFrames::RFList<DecayRecoFrame>   m_DecayFrames;
     int m_Nvisible;
     int m_Ndecay;
 
-    ReconstructionFrame& GetNewDecayFrame(const string& sname, const string& stitle);
-    ReconstructionFrame& GetNewVisibleFrame(const string& sname, const string& stitle);
     void ClearNewFrames();
 
     bool m_IsAssembled;
-    bool m_IsBackedUp;
     void Disassemble();
     void Assemble();
-    void AssembleRecursive(RestFrame& frame, vector<RestFrame*>& frames, vector<TLorentzVector>& Ps); 
+    void AssembleRecursive(RestFrame& frame, 
+			   std::vector<RestFrame*>& frames, 
+			   std::vector<TLorentzVector>& Ps);
+    
+    DecayRecoFrame& GetNewDecayFrame(const std::string& sname, 
+				     const std::string& stitle);
+    
+    VisibleRecoFrame& GetNewVisibleFrame(const std::string& sname, 
+					 const std::string& stitle);
   };
 
 }

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   VisibleState.cc
@@ -31,24 +31,19 @@
 #include "RestFrames/VisibleRecoFrame.hh"
 #include "RestFrames/Jigsaw.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
-  VisibleState::VisibleState(const string& sname, const string& stitle)
+  VisibleState::VisibleState(const std::string& sname, 
+			     const std::string& stitle)
     : State(sname, stitle) 
   {
-    Init();
+    m_Type = kVisibleState;
+    m_FramePtr = nullptr;
   }
 
   VisibleState::VisibleState() : State() {}
 
   VisibleState::~VisibleState() {}
-
-  void VisibleState::Init(){
-    m_Type = kVisibleState;
-    m_FramePtr = nullptr;
-  }
 
   void VisibleState::Clear(){
     m_FramePtr = nullptr;
@@ -59,10 +54,12 @@ namespace RestFrames {
     return VisibleState::m_Empty;
   }
 
-  void VisibleState::AddFrame(RestFrame& frame){
+  void VisibleState::AddFrame(const RestFrame& frame){
+    if(IsEmpty()) return;
+    
     if(!frame) return;
     if(!frame.IsVisibleFrame() || !frame.IsRecoFrame()) return;
-    m_FramePtr = static_cast<VisibleRecoFrame*>(&frame);
+    m_FramePtr = static_cast<const VisibleRecoFrame*>(&frame);
     m_Frames.Clear();
     m_Frames += frame;
   }
@@ -73,11 +70,11 @@ namespace RestFrames {
     return *m_FramePtr == frame;
   }
 
-  bool VisibleState::IsFrames(const RFList<RestFrame>& frames) const {
+  bool VisibleState::IsFrames(const ConstRestFrameList& frames) const {
     return IsFrame(frames[0]);
   }
 
-  RestFrame& VisibleState::GetFrame() const {
+  RestFrame const& VisibleState::GetFrame() const {
     if(m_FramePtr) 
       return *m_FramePtr;
     else
@@ -87,6 +84,19 @@ namespace RestFrames {
   void VisibleState::SetLabFrameFourVector(){
     if(!m_FramePtr) return;
     SetFourVector(m_FramePtr->GetLabFrameFourVector());
+    SetCharge(m_FramePtr->GetCharge());
+  }
+
+  void VisibleState::SetCharge(const RFCharge& charge){
+    m_Charge = charge;
+  }
+  
+  void VisibleState::SetCharge(int charge){
+    m_Charge = charge;
+  }
+  
+  void VisibleState::SetCharge(int charge_num, int charge_den){
+    m_Charge = RFCharge(charge_num, charge_den);
   }
 
   VisibleState VisibleState::m_Empty;

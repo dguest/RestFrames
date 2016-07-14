@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   TreePlot.cc
@@ -43,15 +43,20 @@
 #include "RestFrames/VisibleRecoFrame.hh"
 #include "RestFrames/InvisibleRecoFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
+
+  using std::string;
+  using std::vector;
+  using std::map;
+  using std::max;
+  using std::min;
 
   ///////////////////////////////////////////////
   // TreePlot class methods
   // class which can plot RestFrame trees
   ///////////////////////////////////////////////
-  TreePlot::TreePlot(const string& sname, const string& stitle)
+  TreePlot::TreePlot(const std::string& sname, 
+		     const std::string& stitle)
     : RFPlot(sname, stitle){
     m_Type = kVanillaTree;
     m_GroupPtr = nullptr;
@@ -96,15 +101,15 @@ namespace RestFrames {
 
     m_JigsawColorMap.clear();
     m_FrameColorMap.clear();
-    m_FrameColorFillMap.clear();
   }
 
-  TCanvas* TreePlot::GetNewCanvas(const string& name, const string& title){
-    string sname, stitle;
+  TCanvas* TreePlot::GetNewCanvas(const std::string& name, 
+				  const std::string& title){
+    std::string sname, stitle;
     if(name == ""){
       char strn[10];
       sprintf(strn,"%d",GetNCanvases()+1);
-      sname = GetName()+string(strn);
+      sname = GetName()+std::string(strn);
     } else {
       sname = name;
     }
@@ -113,17 +118,23 @@ namespace RestFrames {
     else 
       stitle = title;
     
+    sname = GetUniqueName(sname);
     TCanvas* can = new TCanvas(sname.c_str(),stitle.c_str(),600,600);
     can->Range(0.,0.,1.,1.);
     return can;
   }
-
-  void TreePlot::Draw(const string& name, const string& title){
+  
+  void TreePlot::Draw(const std::string& name, const std::string& title,
+		      bool invert_bkg_color,
+		      bool invert_node_color){
     if(m_Type == kVanillaTree) 
       return;
+
+    SetColors(invert_bkg_color,
+	      invert_node_color);
     
     m_CanvasPtr = GetNewCanvas(name,title);
-
+    
     if(m_Type == kFrameTree){
       bool do_jigsaws = (m_Jigsaws.GetN() > 0);
       DrawTreeLinks();
@@ -141,10 +152,12 @@ namespace RestFrames {
     }
  
     m_CanvasPtr->Draw();
+    m_CanvasPtr->SetFillColor(m_color_Bkg);
+    m_CanvasPtr->Modified();
     AddCanvas(m_CanvasPtr);
   }
 
-  void TreePlot::SetFrameTree(const RestFrame& frame){
+  void TreePlot::SetTree(const RestFrame& frame){
     if(!frame) return;
     ClearTree();
     m_Type = kFrameTree;
@@ -155,33 +168,40 @@ namespace RestFrames {
   }
 
   void TreePlot::AddJigsaw(const Jigsaw& jigsaw){
+    if(m_Type != kFrameTree) 
+      return;
     if(!jigsaw) 
       return;
     if(m_Jigsaws.Contains(jigsaw))
       return;
-    
-    RFList<RestFrame> frames = jigsaw.GetParentFrames();
-
-    if(!m_Frames.Contains(frames))
+    if(!m_Frames.Contains(jigsaw.GetParentFrames()))
       return;
     
     FillJigsawLink(jigsaw);
-    m_JigsawColorMap[&jigsaw] = color_Leaf[int(m_JigsawColorMap.size())%6];
+    m_JigsawColorMap[&jigsaw] = int(m_JigsawColorMap.size());
     m_Jigsaws.Add(jigsaw);
   }
 
-  void TreePlot::AddJigsaws(const RFList<Jigsaw>& jigsaws){
-    int N = jigsaws.GetN();
-    for(int j = 0; j < N; j++) AddJigsaw(jigsaws[j]);
-  }
-
-  void TreePlot::SetGroupTree(const Group& group){
+  void TreePlot::SetTree(const Group& group){
     if(!group) return;
+    if(!group.IsSoundMind()) return;
     ClearTree();
     m_GroupPtr = &group;
     m_Type = kGroupTree;
 
     FillGroupTree(group);
+    InitTreeGrid();
+    ConvertNodeCoordinates(m_TreeNodes);
+  }
+
+  void TreePlot::SetTree(const Jigsaw& jigsaw){
+    if(!jigsaw) return;
+    if(!jigsaw.IsSoundMind()) return;
+    ClearTree();
+    m_GroupPtr = &jigsaw.GetGroup();
+    m_Type = kGroupTree;
+
+    FillJigsawTree(jigsaw);
     InitTreeGrid();
     ConvertNodeCoordinates(m_TreeNodes);
   }
@@ -192,7 +212,8 @@ namespace RestFrames {
       if(m_Ncol[irow] > NcolMAX) NcolMAX = m_Ncol[irow];
     }
     m_Node_R = min(min(0.85/double(2*NcolMAX+1),0.85*0.85/double(2*m_Nrow+1)),0.12);
-    if(m_Type == kGroupTree) m_Node_R = min(min(0.65/double(2*NcolMAX+1),0.85/double(2*m_Nrow+1)),0.12);
+    if(m_Type == kGroupTree) 
+      m_Node_R = min(min(0.65/double(2*NcolMAX+1),0.85/double(2*m_Nrow+1)),0.12);
   }
 
   void TreePlot::ConvertNodeCoordinates(vector<TreePlotNode*>& nodes){
@@ -214,10 +235,8 @@ namespace RestFrames {
 
   void TreePlot::AddFrame(const RestFrame& frame){
     m_Frames += frame;
-    if(m_FrameColorMap[frame.GetType()] <= 0){
-      m_FrameColorMap[frame.GetType()] = color_Node[int(frame.GetType())-1];
-      m_FrameColorFillMap[frame.GetType()] = color_fill_Node[int(frame.GetType())-1];
-    }
+    if(m_FrameColorMap.count(frame.GetType()) <= 0)
+      m_FrameColorMap[frame.GetType()] = int(frame.GetType())-1;
   }
 
   void TreePlot::FillFrameTree(const RestFrame& frame){
@@ -330,12 +349,30 @@ namespace RestFrames {
     top_nodePtr->SetLabel(GetStateTitle(group.GetParentState()));
     m_TreeNodes.push_back(top_nodePtr);
     m_Ncol.push_back(1);
-    FillGroupTreeMap(0, group.GetParentState());
+    FillStateTreeMap(0, group.GetParentState());
 
     m_Nrow = m_Ncol.size();
   }
 
-  void TreePlot::FillGroupTreeMap(int irow, const State& state){
+  void TreePlot::FillJigsawTree(const Jigsaw& jigsaw){
+    m_Nrow = 0;
+    m_Ncol.clear();
+  
+    if(!jigsaw.GetParentState()) return;
+
+    TreePlotNode* top_nodePtr = new TreePlotNode();
+    top_nodePtr->SetX(0.);
+    top_nodePtr->SetY(0.);
+    top_nodePtr->SetState(jigsaw.GetParentState());
+    top_nodePtr->SetLabel(GetStateTitle(jigsaw.GetParentState()));
+    m_TreeNodes.push_back(top_nodePtr);
+    m_Ncol.push_back(1);
+    FillStateTreeMap(0, jigsaw.GetParentState());
+
+    m_Nrow = m_Ncol.size();
+  }
+
+  void TreePlot::FillStateTreeMap(int irow, const State& state){
     const Jigsaw& jigsaw = state.GetChildJigsaw();
     if(!jigsaw) return;
     
@@ -359,7 +396,7 @@ namespace RestFrames {
       linkPtr->SetLabel(jigsaw.GetTitle());
       m_TreeLinks.push_back(linkPtr);
       m_Ncol[irow+1]++;
-      FillGroupTreeMap(irow+1, child);
+      FillStateTreeMap(irow+1, child);
     }
   }
 
@@ -371,7 +408,8 @@ namespace RestFrames {
     TreePlotNode* high_new = nullptr;
    
     for(int s = 0; s < Nsplit; s++){
-      RFList<RestFrame> frames = jigsaw.GetChildFrames(s)+
+      RestFrameList frames =
+	jigsaw.GetChildFrames(s)+
 	jigsaw.GetDependancyFrames(s);
       int Nnode = m_TreeNodes.size();
       TreePlotNode* last_nodePtr = nullptr;
@@ -408,6 +446,74 @@ namespace RestFrames {
     }
   }
 
+  void TreePlot::SetColors(bool invert_bkg_color,
+			   bool invert_node_color){
+    if(invert_bkg_color)
+      invert_node_color = !invert_node_color;
+    
+    m_style_Default = 1;
+    m_style_Leaf = 7;
+    m_color_Leaf.clear();
+    
+    if(invert_node_color){
+      for(int i = 0; i < 3; i++){
+	m_color_Node_text[i] = 7000+i*10;
+	m_color_Node_fill[i] = 7003+i*10;
+	if(invert_bkg_color)
+	  m_color_Node_line[i] = 7000+i*10;
+	else
+	  m_color_Node_line[i] = 7002+i*10;
+      }
+      m_color_Node_text[3] = 18;
+      m_color_Node_fill[3] = kGray+3;
+      if(invert_bkg_color)
+	m_color_Node_line[3] = 18;
+      else
+	m_color_Node_line[3] = kGray+1;
+    } else {
+      for(int i = 0; i < 3; i++){
+	m_color_Node_text[i] = 7004+i*10;
+	m_color_Node_fill[i] = 7001+i*10;
+	if(invert_bkg_color)
+	  m_color_Node_line[i] = 7002+i*10;
+	else
+	  m_color_Node_line[i] = 7004+i*10;
+      }
+      m_color_Node_text[3] = kGray+3;
+      m_color_Node_fill[3] = 18;
+      if(invert_bkg_color)
+	m_color_Node_line[3] = kGray+2;
+      else
+	m_color_Node_line[3] = kGray+3;
+    }
+
+    if(invert_bkg_color){
+      m_color_Text = kWhite;
+      m_color_Bkg  = kBlack;
+      for(int i = 0; i < 2; i++)
+	for(int j = 0; j < 2; j++)
+	  m_color_Leaf.push_back(7040+j*10+i*2);
+      for(int i = 0; i < 2; i++)
+	for(int j = 0; j < 2; j++)
+	  m_color_Leaf.push_back(7060+j*10+i*2);
+      m_color_Default_text = kWhite;
+      m_color_Default_line = kWhite;
+      m_color_Default_fill = kBlack;
+    } else {
+      m_color_Text = kBlack;
+      m_color_Bkg  = kWhite;
+      for(int i = 0; i < 2; i++)
+	for(int j = 0; j < 2; j++)
+	  m_color_Leaf.push_back(7043+j*10-i*2);
+      for(int i = 0; i < 2; i++)
+	for(int j = 0; j < 2; j++)
+	  m_color_Leaf.push_back(7063+j*10-i*2);
+      m_color_Default_text = kBlack;
+      m_color_Default_line = kBlack;
+      m_color_Default_fill = kWhite;
+    }
+  }
+  
   void TreePlot::DrawTreeNodes(bool with_rings){
     int Nnode = m_TreeNodes.size();
     for(int i = 0; i < Nnode; i++)
@@ -432,9 +538,10 @@ namespace RestFrames {
     double x1 = linkPtr->GetNode2()->GetX();
     double y1 = linkPtr->GetNode2()->GetY();
 
-    int icolor = color_Default;
+    int icolor_line = m_color_Default_line;
+    int icolor_text = -1;
     int icolor_fill = -1;
-    int istyle = style_Default;
+    int istyle = m_style_Default;
     int isize = int(m_Node_R*70.);
     bool DoWavy = linkPtr->DoWavy();
 
@@ -443,16 +550,17 @@ namespace RestFrames {
     if(!jigsaw.IsEmpty()){
       if(linkPtr->DoLabel()){
 	int priority = GetJigsawPriority(jigsaw.GetNChildren(), jigsaw.GetNDependancyStates());
-	icolor = color_Node[priority];
-	icolor_fill = color_fill_Node[priority];
+	icolor_line = m_color_Node_line[priority];
+	icolor_text = m_color_Node_text[priority];
+	icolor_fill = m_color_Node_fill[priority];
       } else {
 	int Nj = m_Jigsaws.GetN();
 	int index = m_Jigsaws.GetIndex(jigsaw);
 	x0 += (double(index+1)-double(Nj+1)/2.)*m_Node_R*1./max(4.,double(Nj));
 	x1 += (double(index+1)-double(Nj+1)/2.)*m_Node_R*1./max(4.,double(Nj));
-	icolor = m_JigsawColorMap[&jigsaw];
+	icolor_line = m_color_Leaf[m_JigsawColorMap[&jigsaw]%int(m_color_Leaf.size())];
 	if(DoWavy){
-	  istyle = style_Leaf;
+	  istyle = m_style_Leaf;
 	  isize++;
 	}
       }
@@ -460,7 +568,7 @@ namespace RestFrames {
       
     if(fabs(y0-y1) > 1e-10){ // nodes are at different heights - draw line
       TLine *line = new TLine(x0,y0,x1,y1);
-      line->SetLineColor(icolor);
+      line->SetLineColor(icolor_line);
       line->SetLineWidth(isize);
       line->SetLineStyle(istyle);
       m_CanvasPtr->cd();
@@ -480,7 +588,7 @@ namespace RestFrames {
 		       -asin(c/(2.*R))*180/TMath::Pi()+90., 
 		       asin(c/(2.*R))*180/TMath::Pi()+90.);
       }
-      arc->SetLineColor(icolor);
+      arc->SetLineColor(icolor_line);
       arc->SetLineStyle(istyle);
       arc->SetFillStyle(0);
       arc->SetLineWidth(isize);
@@ -502,15 +610,14 @@ namespace RestFrames {
       lat->SetTextFont(132);
       double Xsize = lat->GetXsize();
       double Ysize = lat->GetYsize();
-      double scale = max( Xsize/(6.*m_Node_R), 1.25*Ysize/(fabs(y0-y1)-2.*m_Node_R) );
+      double scale = max(Xsize/(6.*m_Node_R),1.75*Ysize/(fabs(y0-y1)-2.*m_Node_R));
       lat->SetTextSize(1./scale);
-      lat->SetTextColor(icolor);
-      lat->SetLineColor(icolor);
+      lat->SetTextColor(icolor_text);
       
-      Xsize = lat->GetXsize()*1.03;
-      Ysize = lat->GetYsize();
+      Xsize = lat->GetXsize()*1.05;
+      Ysize = lat->GetYsize()*1.5;
       TBox *border = new TBox(x-Xsize/2., y-Ysize/2., x+Xsize/2.,y+Ysize/2.);
-      border->SetLineColor(icolor);
+      border->SetLineColor(icolor_line);
       border->SetLineWidth(2);
       border->SetLineStyle(1);
       border->SetFillColor(icolor_fill);
@@ -528,8 +635,9 @@ namespace RestFrames {
     double x = nodePtr->GetX();
     double y = nodePtr->GetY();
 
-    int icolor = color_Default;
-    int icolor_fill = color_fill_Default;
+    int icolor_line = m_color_Default_line;
+    int icolor_text = m_color_Default_text;
+    int icolor_fill = m_color_Default_fill;
     int istyle = 1;
     int iwidth = int(m_Node_R*50.);;
     bool square = nodePtr->DoSquare();
@@ -537,12 +645,13 @@ namespace RestFrames {
     const RestFrame& frame = nodePtr->GetFrame();
 
     if(!frame.IsEmpty()){
-      icolor = m_FrameColorMap[frame.GetType()];
-      icolor_fill = m_FrameColorFillMap[frame.GetType()]; 
+      icolor_text = m_color_Node_text[m_FrameColorMap[frame.GetType()]];
+      icolor_line = m_color_Node_line[m_FrameColorMap[frame.GetType()]];
+      icolor_fill = m_color_Node_fill[m_FrameColorMap[frame.GetType()]];
     }
 
     if(with_rings){
-      RFList<Jigsaw> jigsaws = nodePtr->GetJigsawList();
+      JigsawList jigsaws = nodePtr->GetJigsawList();
       int Njigsaw = jigsaws.GetN();
       for(int i = 0; i < Njigsaw; i++){
 	double R = 1.03 + double(Njigsaw-i)*0.08;
@@ -550,16 +659,18 @@ namespace RestFrames {
 	if(square){
 	  TBox* ring = new TBox(x-m_Node_R*R*0.88,y-m_Node_R*R*0.88,
 				x+m_Node_R*R*0.88,y+m_Node_R*R*0.88);
-	  ring->SetLineColor(m_JigsawColorMap[&jigsaw]);
-	  ring->SetFillColor(m_JigsawColorMap[&jigsaw]);
+	  int jcolor = m_color_Leaf[m_JigsawColorMap[&jigsaw]%int(m_color_Leaf.size())];
+	  ring->SetLineColor(jcolor);
+	  ring->SetFillColor(jcolor);
 	 
 	  m_CanvasPtr->cd();
 	  ring->Draw();
 	  AddTObject(ring);
 	} else {
 	  TArc* ring = new TArc(x,y,m_Node_R*R);
-	  ring->SetLineColor(m_JigsawColorMap[&jigsaw]);
-	  ring->SetFillColor(m_JigsawColorMap[&jigsaw]);
+	  int jcolor = m_color_Leaf[m_JigsawColorMap[&jigsaw]%int(m_color_Leaf.size())];
+	  ring->SetLineColor(jcolor);
+	  ring->SetFillColor(jcolor);
 	 
 	  m_CanvasPtr->cd();
 	  ring->Draw();
@@ -570,7 +681,7 @@ namespace RestFrames {
     if(square){
       TBox *box = new TBox(x-m_Node_R*0.88,y-m_Node_R*0.88,
 			   x+m_Node_R*0.88,y+m_Node_R*0.88);
-      box->SetLineColor(icolor);
+      box->SetLineColor(icolor_line);
       box->SetFillColor(icolor_fill);
       box->SetLineStyle(istyle);
       box->SetLineWidth(iwidth);
@@ -579,7 +690,7 @@ namespace RestFrames {
       AddTObject(box);
     } else {
       TArc *circle = new TArc(x,y,m_Node_R);
-      circle->SetLineColor(icolor);
+      circle->SetLineColor(icolor_line);
       circle->SetFillColor(icolor_fill);
       circle->SetLineStyle(istyle);
       circle->SetLineWidth(iwidth);
@@ -596,9 +707,10 @@ namespace RestFrames {
       lat->SetNDC();
       lat->SetTextSize(1.);
       lat->SetTextFont(132);
-      double Rnorm = sqrt(lat->GetXsize()*lat->GetXsize()+lat->GetYsize()*lat->GetYsize());
+      double Rnorm = 
+	sqrt(lat->GetXsize()*lat->GetXsize()+lat->GetYsize()*lat->GetYsize());
       lat->SetTextSize(1.8*m_Node_R/Rnorm);
-      lat->SetTextColor(icolor);
+      lat->SetTextColor(icolor_text);
       m_CanvasPtr->cd();
       lat->DrawLatex(x,y,nodetitle);
       delete[] nodetitle;
@@ -606,24 +718,25 @@ namespace RestFrames {
     }
   }
 
-  string TreePlot::GetStateTitle(const State& state){
-    RFList<RestFrame> frames = state.GetListFrames();
+  std::string TreePlot::GetStateTitle(const State& state){
+    RestFrameList frames = state.GetListFrames();
     int Nf = frames.GetN();
-    string title = "";
+    std::string title = "";
     if(Nf > 2) title.append("#splitline{");
     title.append(frames.Get(0).GetTitle());
     for(int f = 1; f < Nf; f++){
       if(f%((Nf+1)/2) == 0 && Nf > 2) title.append("}{");
       title.append("+ ");
-      title.append(frames.Get(f).GetTitle());
+      title.append(frames[f].GetTitle());
     }
     if(Nf > 2) title.append("}");
    
     return title;
   }
 
-  string TreePlot::GetSetTitle(const string& set, const string& index){
-    string title = "#left{#left(";
+  std::string TreePlot::GetSetTitle(const std::string& set, 
+				    const std::string& index){
+    std::string title = "#left{#left(";
     title.append(set);
     title.append("#right)_{");
     title.append(index);
@@ -632,7 +745,7 @@ namespace RestFrames {
   }
 
   void TreePlot::DrawFrameTypeLegend(){
-    vector<string> frame_title;
+    vector<std::string> frame_title;
     frame_title.push_back("Lab State");
     frame_title.push_back("Decay States");
     frame_title.push_back("Visible States");
@@ -648,21 +761,21 @@ namespace RestFrames {
     lat->SetTextAlign(12);
     lat->SetTextSize(0.045);
     lat->SetTextFont(132);
-    lat->SetTextColor(color_Default);
+    lat->SetTextColor(m_color_Default_text);
     double X = 0.045;
     double Y = 0.955;
     double R = 0.035;
     double step = 2.2*R;
     for(int i = 0; i < 4; i++){
       TBox* white = new TBox(X-step/2.,Y-step/2.,0.36,Y+step/2.);
-      white->SetFillColor(kWhite);
-      white->SetLineColor(kBlack);
+      white->SetFillColor(m_color_Bkg);
+      white->SetLineColor(m_color_Bkg);
       white->Draw();
       AddTObject(white);
-      if(m_FrameColorMap[frame_type[i]] <= 0) continue;
+      if(m_FrameColorMap.count(frame_type[i]) <= 0) continue;
       TArc* circle = new TArc(X,Y,R);
-      circle->SetLineColor(m_FrameColorMap[frame_type[i]]);
-      circle->SetFillColor(m_FrameColorFillMap[frame_type[i]]);
+      circle->SetLineColor(m_color_Node_line[m_FrameColorMap[frame_type[i]]]);
+      circle->SetFillColor(m_color_Node_fill[m_FrameColorMap[frame_type[i]]]);
       circle->SetLineWidth(2);
       circle->Draw();
       AddTObject(circle);
@@ -671,13 +784,13 @@ namespace RestFrames {
     }
     if(m_SelfAssembling){
       TBox* white = new TBox(X-step/2.,Y-step/2.,0.36,Y+step/2.);
-      white->SetFillColor(kWhite);
-      white->SetLineColor(kBlack);
+      white->SetFillColor(m_color_Bkg);
+      white->SetLineColor(m_color_Bkg);
       white->Draw();
       AddTObject(white);
       TBox* box = new TBox(X-R*0.88,Y-R*0.88,X+R*0.88,Y+R*0.88);
-      box->SetLineColor(m_FrameColorMap[kDecayFrame]);
-      box->SetFillColor(m_FrameColorFillMap[kDecayFrame]);
+      box->SetLineColor(m_color_Node_line[m_FrameColorMap[kDecayFrame]]);
+      box->SetFillColor(m_color_Node_fill[m_FrameColorMap[kDecayFrame]]);
       box->Draw("l");
       AddTObject(box);
       lat->DrawLatex(X+R*1.3,Y,"Self Assembling");
@@ -686,11 +799,14 @@ namespace RestFrames {
   }
 
   void TreePlot::DrawJigsawLegend(){
-    vector<string> ititle;
-    vector<int> icolor;
+    vector<std::string> ititle;
+    vector<int> icolor_line;
+    vector<int> icolor_text;
     int Nj = m_Jigsaws.GetN();
     for(int i = 0; i < Nj; i++){
-      icolor.push_back(m_JigsawColorMap[&m_Jigsaws[i]]);
+      int jcolor = m_color_Leaf[m_JigsawColorMap[&m_Jigsaws[i]]%int(m_color_Leaf.size())];
+      icolor_line.push_back(jcolor);
+      icolor_text.push_back(jcolor);
       ititle.push_back(m_Jigsaws[i].GetLabel().c_str());
     }
 
@@ -698,7 +814,7 @@ namespace RestFrames {
     for(int i = 0; i < Nj; i++){
       dum.push_back(new TLine(0.0,0.0,0.001,0.001));
       dum[i]->SetLineWidth(int(m_Node_R*70.));
-      dum[i]->SetLineColor(icolor[i]);
+      dum[i]->SetLineColor(icolor_line[i]);
       AddTObject(dum[i]);
     }
   
@@ -708,22 +824,25 @@ namespace RestFrames {
     for(int i = 0; i < Nj; i++){
       entry.push_back(leg->AddEntry(dum[i], ititle[i].c_str()));
       entry[i]->SetMarkerSize(0);
-      entry[i]->SetMarkerColor(icolor[i]);
+      entry[i]->SetMarkerColor(icolor_line[i]);
+      entry[i]->SetFillColor(m_color_Bkg);
     }
-    leg->SetLineColor(kWhite);
-    leg->SetFillColor(kWhite);
-    leg->SetShadowColor(kWhite);
+    leg->SetLineColor(m_color_Bkg);
+    leg->SetFillColor(m_color_Bkg);
+    leg->SetShadowColor(m_color_Bkg);
+    leg->SetTextColor(m_color_Text);
     leg->SetTextFont(132);
     leg->SetTextSize(0.042);
     leg->Draw();
   }
 
-  void TreePlot::DrawTitle(const string& title){
+  void TreePlot::DrawTitle(const std::string& title){
     TLatex* lat = new TLatex(0.0,0.0,title.c_str());
     lat->SetTextAlign(22);
     lat->SetNDC();
     lat->SetTextSize(0.045);
     lat->SetTextFont(132);
+    lat->SetTextColor(m_color_Text);
     double x = lat->GetXsize()/2. + 0.01;
     double y = 1. - lat->GetYsize()/2. - 0.01;
     m_CanvasPtr->cd();

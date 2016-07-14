@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   SetRapidityInvJigsaw.cc
@@ -30,11 +30,10 @@
 #include "RestFrames/SetRapidityInvJigsaw.hh"
 #include "RestFrames/RestFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
-  SetRapidityInvJigsaw::SetRapidityInvJigsaw(const string& sname, const string& stitle) : 
+  SetRapidityInvJigsaw::SetRapidityInvJigsaw(const std::string& sname, 
+					     const std::string& stitle) : 
     InvisibleJigsaw(sname, stitle, 1, 1)
   {
     m_Axis = RestFrame::GetAxis();
@@ -53,7 +52,7 @@ namespace RestFrames {
       return SetSpirit(false);
     
     TLorentzVector inv_P = GetParentState().GetFourVector();
-    TLorentzVector vis_P = m_DependancyStates[0].GetFourVector();
+    TLorentzVector vis_P = GetDependancyStates(0).GetFourVector();
 
     TVector3 boostZ = vis_P.BoostVector();
     boostZ = boostZ.Dot(m_Axis.Unit())*m_Axis.Unit();

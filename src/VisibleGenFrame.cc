@@ -29,18 +29,14 @@
 
 #include "RestFrames/VisibleGenFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // VisibleGenFrame class
   ///////////////////////////////////////////////
-  VisibleGenFrame::VisibleGenFrame(const string& sname, const string& stitle) : 
-    VisibleFrame<GeneratorFrame>(sname, stitle)
-  {
-    m_Mass = 0.;
-  }
+  VisibleGenFrame::VisibleGenFrame(const std::string& sname, 
+				   const std::string& stitle) : 
+    VisibleFrame<GeneratorFrame>(sname, stitle) {}
 
   VisibleGenFrame::VisibleGenFrame() : VisibleFrame<GeneratorFrame>() {}
 
@@ -55,18 +51,14 @@ namespace RestFrames {
     if(val < 0.){
       m_Log << LogWarning;
       m_Log << "Unable to set mass to negative value ";
-      m_Log << val << ". Setting to zero." << m_End;
+      m_Log << val << ". Setting to zero." << LogEnd;
       m_Mass = 0.;
     } else {
       m_Mass = val;
     }
   }
 
-  double VisibleGenFrame::GetMass() const {
-    return m_Mass;
-  }
-
-  void VisibleGenFrame::ResetFrame() {}
+  void VisibleGenFrame::ResetGenFrame() {}
 
   bool VisibleGenFrame::GenerateFrame(){ 
     return true;

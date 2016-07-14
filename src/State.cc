@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   State.cc
@@ -31,8 +31,6 @@
 #include "RestFrames/VisibleState.hh"
 #include "RestFrames/RestFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
@@ -41,17 +39,22 @@ namespace RestFrames {
   int State::m_class_key = 0;
 
   // constructor 
-  State::State(const string& sname, const string& stitle)
+  State::State(const std::string& sname, 
+	       const std::string& stitle)
     : RFBase(sname, stitle, State::m_class_key++) 
   {
-    m_Log.SetSource("State");
+    m_Log.SetSource("State "+GetName());
     m_Type = kVanillaState;
     m_ParentJigsawPtr = nullptr;
     m_ChildJigsawPtr = nullptr;
     m_P.SetPxPyPzE(0.,0.,0.,0.);
+    m_Charge = 0;
   }
 
-  State::State() : RFBase() { m_Type = kVanillaState; }
+  State::State() : RFBase() { 
+    m_Type = kVanillaState; 
+    m_Log.SetSource("State "+GetName());
+  }
 
   State::~State() {}
 
@@ -60,11 +63,14 @@ namespace RestFrames {
     m_ChildJigsawPtr = nullptr;
     m_P.SetPxPyPzE(0.,0.,0.,0.);
     m_Frames.Clear();
-    RFBase::Clear();
   }
 
   State& State::Empty(){
     return VisibleState::Empty();
+  }
+
+  StateList const& State::EmptyList(){
+    return m_EmptyList;
   }
 
   /// \brief Returns State (*StateType*) type 
@@ -87,13 +93,13 @@ namespace RestFrames {
     return m_Type == kCombinatoricState;
   }
 
-  void State::AddFrames(const RFList<RestFrame>& frames){
+  void State::AddFrames(const ConstRestFrameList& frames){
     int N = frames.GetN();
     for(int i = 0; i < N; i++)
       AddFrame(frames[i]);
   }
 
-  RFList<RestFrame> const& State::GetListFrames() const {
+  ConstRestFrameList const& State::GetListFrames() const {
     return m_Frames;
   }
 
@@ -107,11 +113,13 @@ namespace RestFrames {
     return m_Frames[0] == frame;
   }
 
-  bool State::IsFrames(const RFList<RestFrame>& frames) const {
+  bool State::IsFrames(const ConstRestFrameList& frames) const {
     return m_Frames == frames;
   }
 
   void State::SetParentJigsaw(Jigsaw& jigsaw){
+    if(IsEmpty()) return;
+    
     if(!jigsaw)
       m_ParentJigsawPtr = nullptr;
     else
@@ -119,20 +127,22 @@ namespace RestFrames {
   }
 
   void State::SetChildJigsaw(Jigsaw& jigsaw){
+    if(IsEmpty()) return;
+    
     if(!jigsaw)
       m_ChildJigsawPtr = nullptr;
     else
       m_ChildJigsawPtr = &jigsaw;
   }
 
-  Jigsaw const& State::GetParentJigsaw() const { 
+  Jigsaw& State::GetParentJigsaw() const { 
     if(m_ParentJigsawPtr)
       return *m_ParentJigsawPtr;
     else 
       return Jigsaw::Empty();
   }
   
-  Jigsaw const& State::GetChildJigsaw() const { 
+  Jigsaw& State::GetChildJigsaw() const { 
     if(m_ChildJigsawPtr)
       return *m_ChildJigsawPtr;
     else
@@ -144,21 +154,17 @@ namespace RestFrames {
   }
 
   void State::SetFourVector(const TLorentzVector& V){
-    m_P.SetVectM(V.Vect(),V.M());
+    m_P = V;
   }
 
   TLorentzVector State::GetFourVector() const {
-    TLorentzVector V;
-    V.SetVectM(m_P.Vect(),max(0.,m_P.M()));
-    return V;
+    return m_P;
   }
 
-  void State::FillGroupJigsawDependancies(RFList<Jigsaw>& jigsaws) const {
-    if(m_ParentJigsawPtr) m_ParentJigsawPtr->FillGroupJigsawDependancies(jigsaws);
+  RFCharge State::GetCharge() const {
+    return m_Charge;
   }
 
-  void State::FillStateJigsawDependancies(RFList<Jigsaw>& jigsaws) const {
-    if(m_ParentJigsawPtr) m_ParentJigsawPtr->FillStateJigsawDependancies(jigsaws);
-  }
+  const StateList State::m_EmptyList;
 
 }

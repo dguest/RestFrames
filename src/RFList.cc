@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFList.cc
@@ -28,17 +28,20 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include "RestFrames/RFList.hh"
-#include "RestFrames/ReconstructionFrame.hh"
+#include "RestFrames/VisibleRecoFrame.hh"
+#include "RestFrames/DecayRecoFrame.hh"
 #include "RestFrames/ResonanceGenFrame.hh"
 #include "RestFrames/Jigsaw.hh"
 #include "RestFrames/Group.hh"
 #include "RestFrames/VisibleState.hh"
 #include "RestFrames/InvisibleState.hh"
 #include "RestFrames/CombinatoricState.hh"
-
-using namespace std;
+#include "RestFrames/HistPlotVar.hh"
+#include "RestFrames/HistPlotCategory.hh"
 
 namespace RestFrames {
+
+  using std::vector;
 
   template <class T, class Derived>
   void RFListBase<T,Derived>::Clear(){
@@ -219,6 +222,15 @@ namespace RestFrames {
       V += m_Objs[i]->GetFourVector(frame);
     return V.P();
   }
+
+  RFCharge RFList<RestFrame>::GetCharge() const {
+    RFCharge charge;
+    int N = GetN();
+    for(int i = 0; i < N; i++)
+      charge += m_Objs[i]->GetCharge();
+    
+    return charge;
+  }
   
   // State methods
   State& RFList<State>::GetFrame(const RestFrame& frame) const {
@@ -238,6 +250,15 @@ namespace RestFrames {
     return V;
   }
 
+  RFCharge RFList<State>::GetCharge() const {
+    RFCharge charge;
+    int N = GetN();
+    for(int i = 0; i < N; i++)
+      charge += m_Objs[i]->GetCharge();
+    
+    return charge;
+  }
+
   void RFList<State>::Boost(const TVector3& B) const {
     int N = GetN();
     for(int i = 0; i < N; i++){
@@ -246,29 +267,43 @@ namespace RestFrames {
   }
 
   template class RFList<RFBase>;
+  template class RFList<RestFrame>; 
   template class RFList<const RestFrame>; 
   template class RFList<ReconstructionFrame>;
   template class RFList<GeneratorFrame>;
+  template class RFList<VisibleRecoFrame>;
+  template class RFList<DecayRecoFrame>;
   template class RFList<ResonanceGenFrame>; 
   template class RFList<Jigsaw>;
   template class RFList<const Jigsaw>;
   template class RFList<Group>;
+  template class RFList<const Group>;
+  template class RFList<State>;
   template class RFList<VisibleState>;
   template class RFList<InvisibleState>;
   template class RFList<CombinatoricState>;
+  template class RFList<HistPlotVar>;
+  template class RFList<HistPlotCategory>;
+  template class RFList<const HistPlotCategory>;
 
   template class RFListBase<RFBase,RFList<RFBase> >;
   template class RFListBase<RestFrame,RFList<RestFrame> >; 
   template class RFListBase<const RestFrame,RFList<const RestFrame> >; 
   template class RFListBase<ReconstructionFrame,RFList<ReconstructionFrame> >; 
   template class RFListBase<GeneratorFrame,RFList<GeneratorFrame> >;
+  template class RFListBase<VisibleRecoFrame,RFList<VisibleRecoFrame> >;
+  template class RFListBase<DecayRecoFrame,RFList<DecayRecoFrame> >; 
   template class RFListBase<ResonanceGenFrame,RFList<ResonanceGenFrame> >; 
   template class RFListBase<Jigsaw,RFList<Jigsaw> >;
   template class RFListBase<const Jigsaw,RFList<const Jigsaw> >;
   template class RFListBase<Group,RFList<Group> >;
+  template class RFListBase<const Group,RFList<const Group> >;
   template class RFListBase<State,RFList<State> >;
   template class RFListBase<VisibleState,RFList<VisibleState> >;
   template class RFListBase<InvisibleState,RFList<InvisibleState> >;
   template class RFListBase<CombinatoricState,RFList<CombinatoricState> >;
+  template class RFListBase<HistPlotVar,RFList<HistPlotVar> >;
+  template class RFListBase<HistPlotCategory,RFList<HistPlotCategory> >;
+  template class RFListBase<const HistPlotCategory,RFList<const HistPlotCategory> >;
 
 }

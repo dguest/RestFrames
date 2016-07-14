@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFLog.hh
@@ -37,8 +37,6 @@
 
 #include "RestFrames/RFList.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class RFBase;
@@ -52,14 +50,15 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class RFLog {
   public:
-    RFLog(const string& source, LogType def_type = LogInfo);
+    RFLog(const std::string& source, LogType def_type = LogInfo);
     RFLog();
     ~RFLog();
 
-    void SetSource(const string& source_name){ m_Source = source_name; }
+    void SetSource(const std::string& source);
+
     friend void SetLogPrint(bool print);
     friend void SetLogPrint(LogType type, bool print);
-    friend void SetLogStream(ostream* ostr);
+    friend void SetLogStream(std::ostream* ostr);
     friend void SetLogColor(bool color);
     friend void SetLogMaxWidth(int NMAX);
 
@@ -67,8 +66,8 @@ namespace RestFrames {
       
     RFLog& operator<< (LogType type);
     RFLog& operator<< (RFLog& (*_f)( RFLog&));
-    RFLog& operator<< (ostream& (*_f)(ostream&));
-    RFLog& operator<< (ios& (*_f)(ios&));
+    RFLog& operator<< (std::ostream& (*_f)(std::ostream&));
+    RFLog& operator<< (std::ios& (*_f)(std::ios&));
 
     template <class T> 
     RFLog& operator<< (T arg){
@@ -77,17 +76,17 @@ namespace RestFrames {
     }
 
   private:
-    static ostream* m_Ostr;
-    static bool     m_Color;
-    static int      m_NMAX;
-    static map<LogType, bool> m_PrintMap;
-    map<LogType, string> m_TypeMap;      
-    map<LogType, string> m_ColorMap;  
+    static std::ostream* m_Ostr;
+    static bool          m_Color;
+    static int           m_NMAX;
+    static std::map<LogType, bool> m_PrintMap;
+    std::map<LogType, std::string> m_TypeMap;      
+    std::map<LogType, std::string> m_ColorMap;  
 
     void Send();
     void Init();
-    string GetFormattedSource() const;
-    string GetFormattedMessage(const string& message);
+    std::string GetFormattedSource() const;
+    std::string GetFormattedMessage(const std::string& message);
 
     void PrintObject(const RFBase* objPtr);
     template <class T>
@@ -95,24 +94,24 @@ namespace RestFrames {
 
     LogType m_DefType;
     LogType m_CurType;
-    string m_Source;
-    ostringstream m_Message;
+    std::string m_Source;
+    std::ostringstream m_Message;
 
   };
 
   template <> RFLog& RFLog::operator<< (const RFBase* arg);
-  template <> RFLog& RFLog::operator<< (const RestFrames::RFList<RFBase>* arg);
+  template <> RFLog& RFLog::operator<< (const RFBaseList* arg);
 
   inline RFLog& RFLog::operator<< (RFLog& (*_f)(RFLog&)){
     return (_f)(*this);
   }
 
-  inline RFLog& RFLog::operator<< (ostream& (*_f)(ostream&)){
+  inline RFLog& RFLog::operator<< (std::ostream& (*_f)(std::ostream&)){
    (_f)(m_Message);
    return *this;
   }
 
-  inline RFLog& RFLog::operator<< (std::ios& (*_f)(ios&)){
+  inline RFLog& RFLog::operator<< (std::ios& (*_f)(std::ios&)){
     (_f)(m_Message);
     return *this;
   }
@@ -127,19 +126,18 @@ namespace RestFrames {
   const RFBase* Log(const RFBase& obj);
   const RFBase* Log(const RFBase* ptr);
   template <class T> 
-  const RFList<RFBase>* Log(const RFList<T>& list){ return (const RFList<RFBase>*)&list; }
+  const RFList<RFBase>* Log(const RFList<T>& list){ return (const RFBaseList*)&list; }
   template <class T> 
-  const RFList<RFBase>* Log(const RFList<T>* ptr){ return (const RFList<RFBase>*)ptr; }
+  const RFList<RFBase>* Log(const RFList<T>* ptr){ return (const RFBaseList*)ptr; }
 
 #ifndef __MAKECINT__
-  #define m_End RFLog::EndMessage  
-  #define g_End RFLog::EndMessage
+  #define LogEnd RFLog::EndMessage
 #endif
 
-  class RestFramesException : public exception {
+  class RestFramesException : public std::exception {
 
   public:
-    RestFramesException(const string& message) : m_Message(message) {} 
+    RestFramesException(const std::string& message) : m_Message(message) {} 
 
     virtual ~RestFramesException() throw() {}
 
@@ -148,16 +146,16 @@ namespace RestFrames {
     }
 	
   private:
-    string m_Message;
+    std::string m_Message;
     
   };
 
   void SetLogPrint(bool print = true);
   void SetLogPrint(LogType type, bool print = true);
-  void SetLogStream(ostream* ostr);
+  void SetLogStream(std::ostream* ostr);
   void SetLogColor(bool color = true);
   void SetLogMaxWidth(int NMAX);
-  map<RestFrames::LogType,bool> InitPrintMap();
+  std::map<RestFrames::LogType,bool> InitPrintMap();
 
 }
 

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   ReconstructionFrame.hh
@@ -33,23 +33,19 @@
 #include "RestFrames/RestFrame.hh"
 #include "RestFrames/Group.hh"
 
-using namespace std;
-
 namespace RestFrames {
-
+  
   ///////////////////////////////////////////////
   // ReconstructionFrame class
   ///////////////////////////////////////////////
   class ReconstructionFrame : public RestFrame {
   public:
-    ReconstructionFrame(const string& sname, const string& stitle);
+    ReconstructionFrame(const std::string& sname, const std::string& stitle);
     ReconstructionFrame();
     virtual ~ReconstructionFrame();
 
     /// \brief Clears ReconstructionFrame of all connections to other objects
     virtual void Clear();
-
-    static ReconstructionFrame& Empty();
 
     /// \brief Add a child RestFrame to this frame
     ///
@@ -60,6 +56,20 @@ namespace RestFrames {
     /// if it is already listed as a child.
     virtual void AddChildFrame(RestFrame& frame);
 
+    /// \brief Remove a child of this frame 
+    ///
+    /// \param frame     child frame to be removed
+    ///
+    /// Method for removing a child RestFrame from the
+    /// list of children of this frame (if it is in that list).
+    virtual void RemoveChildFrame(RestFrame& frame);
+
+    /// \brief Remove all the children of this frame
+    ///
+    /// Method for removing all the children of this frame. 
+    /// No child left behind.
+    void RemoveChildFrames();
+    
     /// \brief Set the parent frame for this frame
     ///
     /// \param frame     parent frame
@@ -77,25 +87,32 @@ namespace RestFrames {
     virtual ReconstructionFrame const& GetParentFrame() const;
 
     /// \brief Get the frame of the *i* th child
-    virtual ReconstructionFrame& GetChildFrame(int i) const;
+    virtual ReconstructionFrame& GetChildFrame(int i = 0) const;
 
     virtual void SetGroup(Group& group = Group::Empty());
     Group& GetGroup() const;
-    RestFrames::RFList<Group> GetListGroups() const;
+    GroupList GetListGroups() const;
 
-    virtual bool InitializeAnalysisRecursive();
-    virtual bool ClearEventRecursive();
-    virtual bool AnalyzeEventRecursive();
+    static ReconstructionFrame& Empty();
 
   protected:
-    Group* m_GroupPtr;
-    mutable map<const RestFrame*, RestFrames::RFList<State> > m_ChildStates;
+    bool InitializeAnalysisRecursive();
+    bool ClearEventRecursive();
+    bool AnalyzeEventRecursive();
 
+    virtual bool ResetRecoFrame();
+    virtual bool ReconstructFrame();
+
+    virtual StateList const& GetChildStates(int i = 0) const;
+    virtual StateList const& GetChildStates(const RestFrame& child) const;
+    
   private:
-    void Init();
+    Group* m_GroupPtr;
+    mutable std::map<const RestFrame*, StateList > m_ChildStates;
+    
     bool InitializeVisibleStates();
     bool InitializeGroupStates();
-    void FillListGroupsRecursive(RestFrames::RFList<Group>& groups) const;
+    void FillListGroupsRecursive(GroupList& groups) const;
 
   };
 

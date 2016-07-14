@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   LabGenFrame.cc
@@ -29,20 +29,26 @@
 
 #include "RestFrames/LabGenFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // LabGenFrame class
   ///////////////////////////////////////////////
-  LabGenFrame::LabGenFrame(const string& sname, const string& stitle) : 
+  LabGenFrame::LabGenFrame(const std::string& sname, 
+			   const std::string& stitle) : 
     LabFrame<GeneratorFrame>(sname, stitle)
   {
     m_PT = 0.;
+    m_PToM = -1.;
     m_PL = 0.;
     m_Phi = -1.;
-    m_Theta = -1.;
+
+    m_MaxM = -1.;
+
+    m_NBurnInMCMC = 1000;
+    m_NDiscardMCMC = 5;
+
+    m_FailTolerance = 1000;
   }
 
   LabGenFrame::~LabGenFrame() {}
@@ -57,18 +63,31 @@ namespace RestFrames {
     SetPhi(P.Phi());
   }
 
-  void LabGenFrame::SetTransverseMomenta(double val){
+  void LabGenFrame::SetPToverM(double val){
     if(val < 0.){
       m_Log << LogWarning;
-      m_Log << "Unable to set transverse mass to negative value ";
-      m_Log << val << ". Setting to zero." << m_End;
-      m_PT = 0.;
+      m_Log << "Unable to set transverse momentum ";
+      m_Log << "to negative value: " << val << "*mass";
+      m_Log << LogEnd;
     } else {
-      m_PT = val;
+      m_PToM = val;
+      m_PT = 0.;
     }
   }
 
-  void LabGenFrame::SetLongitudinalMomenta(double val){
+  void LabGenFrame::SetTransverseMomentum(double val){
+    if(val < 0.){
+      m_Log << LogWarning;
+      m_Log << "Unable to set transverse momentum ";
+      m_Log << "to negative value: " << val;
+      m_Log << LogEnd;
+    } else {
+      m_PT = val;
+      m_PToM = -1.;
+    }
+  }
+
+  void LabGenFrame::SetLongitudinalMomentum(double val){
     m_PL = val;
   }
 
@@ -78,18 +97,13 @@ namespace RestFrames {
     m_Phi = val;
   }
 
-  void LabGenFrame::ResetProductionAngles(){
-     m_Phi = -1.;
-     m_Theta = -1.;
-  }
-
-  void LabGenFrame::ResetFrame(){
+  void LabGenFrame::ResetGenFrame(){
     SetSpirit(false);
-    ResetProductionAngles();
+    m_Phi = -1.;
   }
 
   bool LabGenFrame::InitializeAnalysis(){
-    m_Log << LogVerbose << "Initializing this tree for analysis..." << m_End;
+    m_Log << LogVerbose << "Initializing this tree for analysis..." << LogEnd;
    
     if(!IsSoundBody()){
       UnSoundBody(RF_FUNCTION);
@@ -97,28 +111,98 @@ namespace RestFrames {
     }
 
     if(!InitializeAnalysisRecursive()){
-      m_Log << LogWarning << "Unable to recursively initialize analysis" << m_End;
+      m_Log << LogWarning << "...Unable to recursively initialize analysis" << LogEnd;
       return SetMind(false);
     }
 
-    m_Log << LogVerbose << "...Done" << m_End;
+    for(int i = 0; i < m_NBurnInMCMC; i++)
+      if(!IterateRecursiveMCMC()){
+	m_Log << LogWarning << "...Unable to recursively initialize analysis" << LogEnd;
+	return SetMind(false);
+      }
+
+    m_Log << LogVerbose << "...Done" << LogEnd;
     return SetMind(true);
   }
   
+  void LabGenFrame::SetN_MCMCBurnIn(int N){
+    SetMind(false);
+    m_NBurnInMCMC = std::max(0,N);
+  }
+
+  void LabGenFrame::SetN_MCMCDiscard(int N){
+    SetMind(false);
+    m_NDiscardMCMC = std::max(1,N);
+  }
+
+  void LabGenFrame::SetFailTolerance(int Nfail){
+    m_FailTolerance = Nfail;
+  }
+
+  bool LabGenFrame::InitializeGenAnalysis(){
+    if(!IsSoundBody()){
+      UnSoundBody(RF_FUNCTION);
+      return SetMind(false);
+    } 
+
+    GeneratorFrame& child = GetChildFrame();
+    if(child.IsVariableMassMCMC()){
+      double ChildMass, ChildProb;
+      child.GenerateMassMCMC(ChildMass, ChildProb, m_MaxM);
+      m_ChildMassMCMC = ChildMass;
+      m_ChildProbMCMC = ChildProb;
+      SetMassMCMC(ChildMass, child);
+    } else {
+      m_ChildMassMCMC = child.GetMass();
+      m_ChildProbMCMC = 1.;
+    }
+
+    return SetMind(true);
+  }
+
+  bool LabGenFrame::IterateMCMC(){
+    GeneratorFrame& child = GetChildFrame();
+    if(child.IsVariableMassMCMC()){
+      double ChildMass, ChildProb = 0.;
+      child.GenerateMassMCMC(ChildMass, ChildProb, m_MaxM);
+
+      double probOld = GetProbMCMC(m_ChildMassMCMC)*
+	child.GetProbMCMC(m_ChildMassMCMC)/m_ChildProbMCMC;
+
+      double probNew = GetProbMCMC(ChildMass)*
+	child.GetProbMCMC(ChildMass)/ChildProb;
+
+      if(probNew/probOld > GetRandom()){
+	m_ChildMassMCMC = ChildMass;
+	m_ChildProbMCMC = ChildProb;
+	SetMassMCMC(ChildMass, child);
+      } else {
+	SetMassMCMC(m_ChildMassMCMC, child);
+      }
+    }
+
+    return SetMind(true);
+  }
+
   bool LabGenFrame::GenerateFrame(){
     if(!IsSoundBody()) 
       return false;
 
     TLorentzVector P;
-    double M = GetChildFrame(0).GetMass();
+    double M = GetChildFrame().GetMass();
     if(m_Phi < 0.) m_Phi = 2.*acos(-1.)*GetRandom();
 
-    P.SetPxPyPzE(m_PT*cos(m_Phi), m_PT*sin(m_Phi), m_PL, sqrt(m_PT*m_PT+m_PL*m_PL+M*M));
+    if(m_PToM > 0.)
+      P.SetPxPyPzE(m_PToM*M*cos(m_Phi), m_PToM*M*sin(m_Phi), m_PL, 
+		   sqrt(m_PL*m_PL + M*M*(1. + m_PToM*m_PToM)));
+    else 
+      P.SetPxPyPzE(m_PT*cos(m_Phi), m_PT*sin(m_Phi), m_PL, 
+		   sqrt(m_PT*m_PT + m_PL*m_PL + M*M));
+    m_Phi = -1.;
 
-    vector<TLorentzVector> ChildVector;
+    std::vector<TLorentzVector> ChildVector;
     ChildVector.push_back(P);
     SetChildren(ChildVector);
-    ResetProductionAngles();
     
     return SetSpirit(true);
   }
@@ -131,8 +215,33 @@ namespace RestFrames {
   }
 
   bool LabGenFrame::AnalyzeEvent(){
-    if(!AnalyzeEventRecursive())
-      return SetSpirit(false);
+    bool pass = false;
+    int tries = 0;
+
+    while(!pass){
+      for(int i = 0; i < m_NDiscardMCMC; i++)
+	if(!IterateRecursiveMCMC())
+	  return SetSpirit(false);
+      
+      if(!AnalyzeEventRecursive()){
+	return SetSpirit(false);
+      }
+      
+      pass = EventInAcceptance();
+
+      if(!pass){
+	tries++;
+	if(tries > m_FailTolerance &&
+	   m_FailTolerance > 0){
+	  m_Log << LogWarning;
+	  m_Log << "Failed to generate event in ";
+	  m_Log << "acceptance in " << tries;
+	  m_Log << " tries. Giving up." << LogEnd;
+	  return SetSpirit(false);
+	}
+      }
+    }
+
     return SetSpirit(true);
   }
 

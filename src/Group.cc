@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   Group.cc
@@ -33,24 +33,26 @@
 #include "RestFrames/Jigsaw.hh"
 #include "RestFrames/State.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   int Group::m_class_key = 0;
 
-  Group::Group(const string& sname, const string& stitle)
+  Group::Group(const std::string& sname, 
+	       const std::string& stitle)
     : RFBase(sname, stitle, Group::m_class_key++)
   {
-    m_Log.SetSource("Group "+GetName());
     m_Type = kVanillaGroup;
     m_GroupStatePtr = nullptr;
+    m_Log.SetSource("Group "+GetName());
   }
 
-  Group::Group() : RFBase() { m_Type = kVanillaGroup; }
+  Group::Group() : RFBase() { 
+    m_Type = kVanillaGroup; 
+    m_Log.SetSource("Group "+GetName());
+  }
 
   Group::~Group(){
-    if(m_GroupStatePtr) delete m_GroupStatePtr;
+    Clear();
   }
 
   Group& Group::Empty(){
@@ -59,14 +61,15 @@ namespace RestFrames {
 
   void Group::Clear(){
     SetBody(false);
-    if(m_GroupStatePtr) delete m_GroupStatePtr;
+    
     m_GroupStatePtr = nullptr;
-    m_Frames.Clear();
+    
+    RemoveFrames();
+    RemoveJigsaws();
+
     m_States.Clear();
-    m_Jigsaws.Clear();
     m_StatesToResolve.Clear();
     m_JigsawsToUse.Clear(); 
-    RFBase::Clear();
   }
 
   bool Group::IsInvisibleGroup() const{
@@ -78,36 +81,77 @@ namespace RestFrames {
   }
 
   void Group::AddFrame(RestFrame& frame){
-    SetBody(false);
+    if(IsEmpty()) return;
     if(!frame) return;
     if(!frame.IsRecoFrame()) return;
+    SetBody(false);
+
     static_cast<ReconstructionFrame&>(frame).SetGroup(*this);
     m_Frames.Add(frame);
   }
 
+  void Group::AddFrames(const RestFrameList& frames){
+    int N = frames.GetN();
+    for(int i = 0; i < N; i++)
+      AddFrame(frames[i]);
+  }
+
   void Group::AddJigsaw(Jigsaw& jigsaw){
-    SetBody(false);
+    if(IsEmpty()) return;
     if(!jigsaw) return;
 
     if(!jigsaw.GetGroup().IsEmpty()){
-      if(jigsaw.GetGroup() == *this) return;
+      if(jigsaw.GetGroup() == *this) 
+	return;
       Group& group = jigsaw.GetGroup();
       jigsaw.SetGroup();
       group.RemoveJigsaw(jigsaw);
-    }
+    } 
       
+    SetBody(false);
+
     if(m_JigsawsToUse.Add(jigsaw))
       jigsaw.SetGroup(*this);
   }
 
-  void Group::RemoveFrame(const RestFrame& frame){
+  void Group::RemoveFrame(RestFrame& frame){
+    if(!m_Frames.Contains(frame)) 
+      return;
+   
     SetBody(false);
+
+    static_cast<ReconstructionFrame&>(frame).SetGroup();
     m_Frames.Remove(frame);
   }
 
-  void Group::RemoveJigsaw(const Jigsaw& jigsaw){
+  void Group::RemoveFrames(){
+    int N = m_Frames.GetN();
+    for(int i = N-1; i >= 0; i--){
+      RemoveFrame(m_Frames[i]);
+    }
+  }
+
+  void Group::RemoveJigsaw(Jigsaw& jigsaw){
+    if(!m_Jigsaws.Contains(jigsaw) &&
+       !m_JigsawsToUse.Contains(jigsaw))
+      return;
+      
     SetBody(false);
+
+    jigsaw.SetGroup();
     m_Jigsaws.Remove(jigsaw);
+    m_JigsawsToUse.Remove(jigsaw);
+  }
+
+  void Group::RemoveJigsaws(){
+    int N = m_Jigsaws.GetN();
+    for(int i = N-1; i >= 0; i--){
+      RemoveJigsaw(m_Jigsaws[i]);
+    }
+    N = m_JigsawsToUse.GetN();
+    for(int i = N-1; i >= 0; i--){
+      RemoveJigsaw(m_JigsawsToUse[i]);
+    }
   }
 
   bool Group::ContainsFrame(const RestFrame& frame) const {
@@ -118,11 +162,11 @@ namespace RestFrames {
     return m_Frames.GetN();
   }
 
-  const RFList<RestFrame>& Group::GetListFrames() const {
+  const RestFrameList& Group::GetListFrames() const {
     return m_Frames;
   }
 
-  const RFList<Jigsaw>& Group::GetListJigsaws() const {
+  const JigsawList& Group::GetListJigsaws() const {
     return m_Jigsaws;
   }
 
@@ -136,26 +180,39 @@ namespace RestFrames {
   bool Group::InitializeAnalysis(){
     m_Log << LogVerbose;
     m_Log << "Initializing Group for analysis...";
-    m_Log << m_End;
+    m_Log << LogEnd;
 
-    if(m_GroupStatePtr) delete m_GroupStatePtr;
     m_GroupStatePtr = &InitializeParentState();
     m_GroupStatePtr->AddFrames(m_Frames);
- 
+
     if(!ResolveUnknowns()){
       m_Log << LogWarning;
       m_Log << "Unable to resolve unknowns associated with ";
       m_Log << "Frames in this Group with available Jigsaws";
-      m_Log << m_End;
+      m_Log << LogEnd;
       return SetBody(false);
     }
 
-    m_Log << LogVerbose << "...Done" << m_End;
+    m_Log << LogVerbose;
+    m_Log << "...Done initializing group for analysis" << LogEnd;
     SetBody(true);
     return SetMind(true);
   }
 
   bool Group::ResolveUnknowns(){
+    m_JigsawsToUse += m_Jigsaws;
+    m_Jigsaws.Clear();
+
+    int Njigsaw = m_JigsawsToUse.GetN();
+    for(int i = 0; i < Njigsaw; i++){
+      if(m_JigsawsToUse[i].GetNChildren() == 1){
+	m_JigsawsToUse[i].RemoveFrames(m_Frames);
+	int N = GetNFrames();
+	for(int j = 0; j < N; j++)
+	  m_JigsawsToUse[i].AddChildFrame(m_Frames[j]);
+      }
+    }
+
     m_States.Clear();
     m_StatesToResolve.Clear();
     m_States.Add(*m_GroupStatePtr);
@@ -167,8 +224,8 @@ namespace RestFrames {
 	if(state.GetNFrames() != 1){
 	  m_Log << LogWarning;
 	  m_Log << "Cannot find Jigsaw to Resolve State for frames:";
-	  m_Log << endl << "   " << Log(state.GetListFrames());
-	  m_Log << m_End;
+	  m_Log << std::endl << "   " << Log(state.GetListFrames());
+	  m_Log << LogEnd;
 	  return false; 
 	}
 	m_StatesToResolve.Remove(state);
@@ -198,29 +255,36 @@ namespace RestFrames {
       return false;
     
     m_Log << LogVerbose;
-    m_Log << "Found Jigsaw to resolve State:" << endl; 
-    m_Log << " Frames:" << endl << "   ";
-    m_Log << Log(state.GetListFrames()) << endl;
+    m_Log << "Found Jigsaw to resolve State:" << std::endl; 
+    m_Log << " Frames:" << std::endl << "   ";
+    m_Log << Log(state.GetListFrames()) << std::endl;
     m_Log << " Jigsaw:" << Log(jigsawSolutionPtr);
-    m_Log << m_End;
-    InitializeJigsaw(*jigsawSolutionPtr);
+    m_Log << LogEnd;
+    
+    if(!InitializeJigsaw(*jigsawSolutionPtr))
+      return false;
+
     m_JigsawsToUse.Remove(*jigsawSolutionPtr);
     return true;
   }
 
-  void Group::InitializeJigsaw(Jigsaw& jigsaw){
+  bool Group::InitializeJigsaw(Jigsaw& jigsaw){
     State& state = m_StatesToResolve[0];
     jigsaw.SetParentState(state);
+
     if(!jigsaw.InitializeTree()){
       m_Log << LogWarning;
       m_Log << "Unable to initialize Jigsaw:";
-      m_Log << Log(jigsaw) << m_End;
+      m_Log << Log(jigsaw) << LogEnd;
+      return false;
     }
+
     m_States += jigsaw.GetChildStates();
     m_StatesToResolve -= state;
     m_StatesToResolve += jigsaw.GetChildStates();
     m_Jigsaws += jigsaw;
-    return;
+
+    return true;
   }
  
   int Group::GetNChildStates() const {
@@ -244,19 +308,19 @@ namespace RestFrames {
     return State::Empty();
   }
   
-  RFList<State> Group::GetChildStates(const RestFrames::RFList<RestFrame>& frames) const {
+  StateList Group::GetChildStates(const RestFrameList& frames) const {
     // Find States that correspond to these frames, giving
     // preference to States that include more frames (less dependancies)
-    RFList<State> states;
+    StateList states;
     int Ns = m_States.GetN();
     for(int i = 0; i < Ns; i++){
-      RFList<RestFrame> iframes = m_States[i].GetListFrames();
+      RestFrameList iframes = m_States[i].GetListFrames();
       if(frames.Contains(iframes)){
 	int Nsol = states.GetN();
 	bool isnew = true;
 	for(int j = 0; j < Nsol; j++){
 	  // if new copy of existing frame list appears, discard old
-	  RFList<RestFrame> jframes = states[j].GetListFrames();
+	  RestFrameList jframes = states[j].GetListFrames();
 	  if(iframes.Contains(jframes)){
 	    states.Remove(states[j]);
 	    break;
@@ -271,17 +335,17 @@ namespace RestFrames {
       }
     }
 
-    RFList<RestFrame> match_frames;
+    RestFrameList match_frames;
     Ns = states.GetN();
     for(int i = 0; i < Ns; i++)
-      match_frames.Add(states[i].GetListFrames());
+      match_frames += states[i].GetListFrames();
     
     if(!(frames == match_frames)){
       m_Log << LogWarning;
-      m_Log << "Unable to find States corresponding to Frames: " << endl;
-      m_Log << Log(frames) << m_End;
+      m_Log << "Unable to find States corresponding to Frames: " << std::endl;
+      m_Log << Log(frames) << LogEnd;
       SetMind(false);
-      return RFList<State>();
+      return StateList();
     }
     return states;
   }

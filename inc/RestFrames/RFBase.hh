@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFBase.hh
@@ -30,37 +30,19 @@
 #ifndef RFBase_HH
 #define RFBase_HH
 
-// adapted from boost/current_function.hpp
-#if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
-# define RF_FUNCTION __PRETTY_FUNCTION__
-#elif defined(__DMC__) && (__DMC__ >= 0x810)
-# define RF_FUNCTION __PRETTY_FUNCTION__
-#elif defined(__FUNCSIG__)
-# define RF_FUNCTION __FUNCSIG__
-#elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || (defined(__IBMCPP__) && (__IBMCPP__ >= 500))
-# define RF_FUNCTION __FUNCTION__
-#elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
-# define RF_FUNCTION __FUNC__
-#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
-# define RF_FUNCTION __func__
-#elif defined(__cplusplus) && (__cplusplus >= 201103)
-# define RF_FUNCTION __func__
-#else
-# define RF_FUNCTION "(unknown)"
-#endif
-
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <TVector3.h>
 #include <TLorentzVector.h>
+
 #include "RestFrames/RFKey.hh"
 #include "RestFrames/RFLog.hh"
 #include "RestFrames/RFList.hh"
 
-using namespace std;
-
 namespace RestFrames {
+
+  static const double RF_tol = 1e-6;
 
   ////////////////////////////////////////////////////////////////////
   /// \brief Base class for all RestFrame package objects
@@ -78,16 +60,16 @@ namespace RestFrames {
     /// \param sname    class instance name used for log statements
     /// \param stitle   class instance title used in figures
     ////////////////////////////////////////////////////////////////////
-    RFBase(const string& sname, const string& stitle, int key);
+    RFBase(const std::string& sname, const std::string& stitle, int key);
 
     RFBase();
     
     virtual ~RFBase();
 
+    friend void SetWarningTolerance(int NMAX);
+
     /// \brief Clears RFBase of all connections to other objects
     virtual void Clear();
-
-    static RFBase& Empty();
 
     /// \brief Checks whether this is default (empty) instance of class
     bool IsEmpty() const;
@@ -107,10 +89,10 @@ namespace RestFrames {
     RFKey GetKey() const;
 
     /// \brief Returns object name 
-    string GetName() const;
+    std::string GetName() const;
     
     /// \brief Returns object title 
-    string GetTitle() const;
+    std::string GetTitle() const;
     
     /// \brief Tests whether key is the same as this
     bool IsSame(const RFKey& key) const;
@@ -119,16 +101,16 @@ namespace RestFrames {
     bool IsSame(const RFBase& obj) const;
     
     /// \brief Tests whether key is the same as this
-    bool operator==(const RFKey& key) const { return IsSame(key); }
+    bool operator == (const RFKey& key) const { return IsSame(key); }
 
     /// \brief Tests whether *obj* is the same as this
-    bool operator==(const RFBase& obj) const { return IsSame(obj); }
+    bool operator == (const RFBase& obj) const { return IsSame(obj); }
 
     /// \brief Tests whether key is the same as this
-    bool operator!=(const RFKey& key) const { return !IsSame(key); }
+    bool operator != (const RFKey& key) const { return !IsSame(key); }
 
     /// \brief Tests whether *obj* is the same as this
-    bool operator!=(const RFBase& obj) const { return !IsSame(obj); }
+    bool operator != (const RFBase& obj) const { return !IsSame(obj); }
 
     ///@} // end identity/comparison methods
 
@@ -136,11 +118,10 @@ namespace RestFrames {
     void Print(LogType type = LogVerbose) const;
 
     /// \brief String of information associated with object
-    virtual string PrintString(LogType type = LogVerbose) const;
+    virtual std::string PrintString(LogType type = LogVerbose) const;
 
-    /// \brief pointer to RFBase object owned by this one
-    void AddDependent(RFBase* dep);
-
+    static RFBase& Empty();
+    
   protected:      
     mutable RFLog m_Log;
 
@@ -152,26 +133,71 @@ namespace RestFrames {
     virtual bool IsSoundMind() const;
     virtual bool IsSoundSpirit() const;
 
-    void UnSoundBody(const string& function) const;
-    void UnSoundMind(const string& function) const;
-    void UnSoundSpirit(const string& function) const;
+    void UnSoundBody(const std::string& function) const;
+    void UnSoundMind(const std::string& function) const;
+    void UnSoundSpirit(const std::string& function) const;
 
+    /// \brief pointer to RFBase object owned by this one
+    void AddDependent(RFBase* dep);
+    
     RFBase* m_This;
 
+    static const TVector3       m_Empty3Vector;
+    static const TLorentzVector m_Empty4Vector;
+
   private:
-    string m_Name;
-    string m_Title;
+    std::string m_Name;
+    std::string m_Title;
     RFKey m_Key;
+    
     mutable bool m_Body;       
     mutable bool m_Mind;       
-    mutable bool m_Spirit; 
-    vector<RFBase*> m_Owns;
+    mutable bool m_Spirit;
+    
+    std::vector<RFBase*> m_Owns;
 
     static RFBase m_Empty;
+    
+    static int m_BodyCount;
+    static int m_MindCount;
+    static int m_SpiritCount;
 
+    static int m_WarningTolerance;
   };
 
-  double GetProb(double Mp, double Mc1, double Mc2);
+  double GetP(double Mp, double Mc1, double Mc2);
+
+  // adapted from boost/current_function.hpp
+  #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
+  # define RF_FUNCTION __PRETTY_FUNCTION__
+  #elif defined(__DMC__) && (__DMC__ >= 0x810)
+  # define RF_FUNCTION __PRETTY_FUNCTION__
+  #elif defined(__FUNCSIG__)
+  # define RF_FUNCTION __FUNCSIG__
+  #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || (defined(__IBMCPP__) && (__IBMCPP__ >= 500))
+  # define RF_FUNCTION __FUNCTION__
+  #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
+  # define RF_FUNCTION __FUNC__
+  #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+  # define RF_FUNCTION __func__
+  #elif defined(__cplusplus) && (__cplusplus >= 201103)
+  # define RF_FUNCTION __func__
+  #else
+  # define RF_FUNCTION "(unknown)"
+  #endif
+
+  ////////////////////////////////////////////////////////////////////
+  /// \brief Set the tolerance for number of RestFrames warnings
+  /// 
+  /// \param NMAX  Number of allowed warnings of a given type
+  ///
+  /// Function sets the tolerance for the number of RestFrames 
+  /// warnings. Numbers less than 1 indicate infinite tolerance.
+  ////////////////////////////////////////////////////////////////////
+  void SetWarningTolerance(int NMAX = -1);
+  void TooManyBodies(const RFBase& obj);
+  void TooManyMinds(const RFBase& obj);
+  void TooManySpirits(const RFBase& obj);
 
 }
 

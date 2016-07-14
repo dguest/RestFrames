@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFBase.cc
@@ -30,10 +30,10 @@
 #include "RestFrames/RestFrames_config.h"
 #include "RestFrames/RFBase.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
+  using std::max;
+  
   ///////////////////////////////////////////////
   // RFBase class methods
   ///////////////////////////////////////////////
@@ -47,9 +47,12 @@ namespace RestFrames {
     m_Mind   = false;
     m_Spirit = false;
     m_This = this;
+    m_Owns.clear();
+    m_Log.SetSource("RFBase "+GetName());
   }
 
-  RFBase::RFBase(const string& sname, const string& stitle, int key)
+  RFBase::RFBase(const std::string& sname, 
+		 const std::string& stitle, int key)
     : m_Log(), m_Key(key) {
     m_Name  = sname;
     m_Title = stitle;
@@ -57,6 +60,8 @@ namespace RestFrames {
     m_Mind   = false;
     m_Spirit = false;
     m_This = this;
+    m_Owns.clear();
+    m_Log.SetSource("RFBase "+GetName());
   }
 
   RFBase::~RFBase(){
@@ -96,11 +101,11 @@ namespace RestFrames {
     return RFKey(m_Key);
   }
 
-  string RFBase::GetName() const {
+  std::string RFBase::GetName() const {
     return m_Name;
   }
 
-  string RFBase::GetTitle() const {
+  std::string RFBase::GetTitle() const {
     return m_Title;
   }
 
@@ -134,39 +139,51 @@ namespace RestFrames {
   }
 
   void RFBase::Print(LogType type) const {
-    string output = PrintString(type);
-    m_Log << type << output << m_End;
+    std::string output = PrintString(type);
+    m_Log << type << output << LogEnd;
   }
 
-  string RFBase::PrintString(LogType type) const {
-    string output = "\n";
+  std::string RFBase::PrintString(LogType type) const {
+    std::string output = "\n";
     output += "   Name: "+GetName()+"\n";
     output += "   Title: "+GetTitle()+"\n";
     return output;
   }
 
-  void RFBase::UnSoundBody(const string& function) const {
+  void RFBase::UnSoundBody(const std::string& function) const {
     m_Log << LogWarning;
     m_Log << "Unable to evaluate function \"" << function << "\". ";
     m_Log << "Requires a successful call to \"InitializeTree()\" ";
     m_Log << "from the LabFrame associated with this tree.";
-    m_Log << m_End;
+    m_Log << LogEnd;
+
+    RFBase::m_BodyCount++;
+    if(RFBase::m_BodyCount > m_WarningTolerance && 
+       m_WarningTolerance > 0) TooManyBodies(*this);
   }
 
-  void RFBase::UnSoundMind(const string& function) const {
+  void RFBase::UnSoundMind(const std::string& function) const {
     m_Log << LogWarning;
     m_Log << "Unable to evaluate function \"" << function << "\". ";
     m_Log << "Requires a successful call to \"InitializeAnalysis()\" ";
     m_Log << "from the LabFrame associated with this tree.";
-    m_Log << m_End;
+    m_Log << LogEnd;
+
+    RFBase::m_MindCount++;
+    if(RFBase::m_MindCount > m_WarningTolerance && 
+       m_WarningTolerance > 0) TooManyMinds(*this);
   }
 
-  void RFBase::UnSoundSpirit(const string& function) const {
+  void RFBase::UnSoundSpirit(const std::string& function) const {
     m_Log << LogWarning;
     m_Log << "Unable to evaluate function \"" << function << "\". ";
     m_Log << "Requires a successful call to \"AnalyzeEvent()\" ";
     m_Log << "from the LabFrame associated with this tree.";
-    m_Log << m_End;
+    m_Log << LogEnd;
+
+    RFBase::m_SpiritCount++;
+    if(RFBase::m_SpiritCount > m_WarningTolerance && 
+       m_WarningTolerance > 0) TooManySpirits(*this);
   }
 
   // Initializer.
@@ -178,19 +195,62 @@ namespace RestFrames {
     printf(PACKAGE_VERSION);
     printf(" -- Developed by Christopher Rogan (crogan@cern.ch)\n");
     printf("                     ");
-    printf("Copyright (c) 2014-2015, Christopher Rogan\n");
+    printf("Copyright (c) 2014-2016, Christopher Rogan\n");
     printf("                     ");
     printf("http://RestFrames.com\n");
     printf("\x1b[0m" "\n");
   }
 
+  int RFBase::m_BodyCount = 0;
+  int RFBase::m_MindCount = 0;
+  int RFBase::m_SpiritCount = 0;
+
+  int RFBase::m_WarningTolerance = 100;
+
   RFBase RFBase::m_Empty;
 
-  double GetProb(double Mp, double Mc1, double Mc2){
+  const TVector3       RFBase::m_Empty3Vector;
+  const TLorentzVector RFBase::m_Empty4Vector;
+
+  double GetP(double Mp, double Mc1, double Mc2){
     if(Mp <= 0.) return 0.;
-    Mc1 = max(Mc1, 0.);
-    Mc2 = max(Mc2, 0.);
-    return sqrt(max(0., (Mp*Mp-Mc1*Mc1-Mc2*Mc2)*(Mp*Mp-Mc1*Mc1-Mc2*Mc2)-4.*Mc1*Mc1*Mc2*Mc2) )/2./Mp;
+    Mc1 = std::max(Mc1, 0.);
+    Mc2 = std::max(Mc2, 0.);
+    return sqrt(std::max(0., (Mp*Mp-Mc1*Mc1-Mc2*Mc2)*(Mp*Mp-Mc1*Mc1-Mc2*Mc2)-4.*Mc1*Mc1*Mc2*Mc2) )/2./Mp;
+  }
+
+  void SetWarningTolerance(int NMAX){
+    RFBase::m_WarningTolerance = NMAX;
+  }
+
+  void TooManyBodies(const RFBase& obj){
+    g_Log << LogError;
+    g_Log << "Too many warnings. ";
+    g_Log << "Need a successful call to \"InitializeTree()\" ";
+    g_Log << "from the LabFrame associated with the offending/";
+    g_Log << "unsuccessful function calls. The last call came from:";
+    g_Log << Log(obj);
+    g_Log << "Please edit your code and try again." << LogEnd;
+  }
+
+  void TooManyMinds(const RFBase& obj){
+    g_Log << LogError;
+    g_Log << "Too many warnings. ";
+    g_Log << "Need a successful call to \"InitializeAnalysis()\" ";
+    g_Log << "from the LabFrame associated with the offending/";
+    g_Log << "unsuccessful function calls. The last call came from:";
+    g_Log << Log(obj);
+    g_Log << "Please edit your code and try again." << LogEnd;
+  }
+
+  void TooManySpirits(const RFBase& obj){
+    g_Log << LogError;
+    g_Log << "Too many warnings. ";
+    g_Log << "Need a successful call to \"AnalyzeEvent()\" ";
+    g_Log << "from the LabFrame associated with the offending/";
+    g_Log << "unsuccessful function calls. The last call came from:";
+    g_Log << Log(obj);
+    g_Log << "Please edit your code and try again." << LogEnd;
   }
 
 }

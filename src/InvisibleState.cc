@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleState.cc
@@ -31,15 +31,14 @@
 #include "RestFrames/InvisibleJigsaw.hh"
 #include "RestFrames/InvisibleRecoFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // InvisibleState class
   ///////////////////////////////////////////////
 
-  InvisibleState::InvisibleState(const string& sname, const string& stitle)
+  InvisibleState::InvisibleState(const std::string& sname, 
+				 const std::string& stitle)
     : State(sname, stitle)
   {
     m_Type = kInvisibleState;
@@ -57,7 +56,9 @@ namespace RestFrames {
     State::Clear();
   }
 
-  void InvisibleState::AddFrame(RestFrame& frame){
+  void InvisibleState::AddFrame(const RestFrame& frame){
+    if(IsEmpty()) return;
+    
     if(!frame) return;
     if(frame.IsInvisibleFrame() &&
        frame.IsRecoFrame())
@@ -81,13 +82,9 @@ namespace RestFrames {
     if(!GetChildJigsaw().IsEmpty())
       return static_cast<const InvisibleJigsaw&>(GetChildJigsaw()).GetMinimumMass();
     if(GetNFrames() == 1)
-      return static_cast<InvisibleRecoFrame&>(m_Frames[0]).GetMinimumMass();
+      return static_cast<const InvisibleRecoFrame&>(m_Frames[0]).GetMinimumMass();
     else
       return 0.;
-  }
-
-  void InvisibleState::FillInvisibleMassJigsawDependancies(RFList<Jigsaw>& jigsaws) const {
-    static_cast<const InvisibleJigsaw&>(GetChildJigsaw()).FillInvisibleMassJigsawDependancies(jigsaws);
   }
 
   InvisibleState InvisibleState::m_Empty;

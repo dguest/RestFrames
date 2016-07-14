@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   HistPlot.hh
@@ -31,9 +31,6 @@
 #define HistPlot_HH
 
 #include <utility>
-#include <TLatex.h>
-#include <TColor.h>
-#include <TStyle.h>
 #include <TH1D.h>
 #include <TH2D.h>
 
@@ -42,61 +39,85 @@
 namespace RestFrames {
 
   class HistPlotVar;
+  class HistPlotCategory;
 
   class HistPlot : public RFPlot {
 
   public:
-    HistPlot(const string& sname, const string& stitle,
-	     const string& cat = "");
+    HistPlot(const std::string& sname, const std::string& stitle);
     ~HistPlot();
 
     virtual void Clear();
 
-    HistPlotVar const& GetNewVar(const string& name, const string& title, 
+    HistPlotVar const& GetNewVar(const std::string& name, const std::string& title, 
 				 double minval, double maxval,
-				 const string& unit = "");
-    
-    void AddHist(const HistPlotVar& var);
+				 const std::string& unit = "");
 
-    void AddHist(const HistPlotVar& varX,
-		 const HistPlotVar& varY);
+    HistPlotCategory const& GetNewCategory(const std::string& name, const std::string& title);
+    
+    void AddPlot(const HistPlotVar& var, 
+		 RestFrames::RFList<const HistPlotCategory> cats = 
+		 RFList<const HistPlotCategory>(),
+		 bool invert_colors = false);
+    void AddPlot(const HistPlotVar& varX,
+		 const HistPlotVar& varY,
+		 RestFrames::RFList<const HistPlotCategory> cats =
+		 RFList<const HistPlotCategory>(),
+		 bool invert_colors = false);
     
     void Fill(double weight = 1.);
+    void Fill(const HistPlotCategory& cat, double weight = 1.);
 
-    void Draw();
+    void Draw(bool invert_colors = false);
 
-    void SetPlotLabel(const string& label);
+    void SetPlotLabel(const std::string& label);
 
-    void SetPlotTitle(const string& title);
+    void SetPlotTitle(const std::string& title);
 
-    void SetPlotCategory(const string& cat);
-
-    void SetScaleLabel(const string& label);
+    void SetScaleLabel(const std::string& label);
 
     void SetScale(double scale = -1);
 
-    void WriteHist(const string& name);
+    void SetRebin(int rebin = 4);
 
-    static void SetStyle();
+    void WriteHist(const std::string& filename);
 
   private:
-    string m_PlotLabel;
-    string m_PlotTitle;
-    string m_PlotCategory;
-    string m_ScaleLabel;
+    std::string m_PlotLabel;
+    std::string m_PlotTitle;
+    std::string m_ScaleLabel;
     double m_Scale;
     bool   m_SetScale;
-    vector<TH1D*> m_1DHists;
-    vector<TH2D*> m_2DHists;
-    vector<HistPlotVar*> m_Vars;
-    map<TH1D*,const HistPlotVar*>        m_HistToVar;
-    map<TH2D*,pair<const HistPlotVar*,
-		   const HistPlotVar*> > m_HistToVars;
+    int    m_Rebin;
+    
+    std::vector<TH1D*> m_1DHists;
+    std::vector<TH2D*> m_2DHists;
+    // std::vector<HistPlotVar*>      m_Vars;
+    // std::vector<HistPlotCategory*> m_Cats;
+    HistPlotVarList m_Vars;
+    HistPlotCatList m_Cats;
+    std::map<const HistPlotCategory*,std::vector<TH1D*> > m_CatToHist1D;
+    std::map<const HistPlotCategory*,std::vector<TH2D*> > m_CatToHist2D;
+    
+    std::vector<const HistPlotVar*>             m_Plot1D_Var;
+    std::vector<HistPlotCatList>                m_Plot1D_Cats;
+    std::vector<bool>                           m_Plot1D_Color;
+    std::vector<std::pair<const HistPlotVar*,
+			  const HistPlotVar*> > m_Plot2D_Vars;
+    std::vector<const HistPlotCategory*>        m_Plot2D_Cat;
+    std::vector<bool>                           m_Plot2D_Color;
 
-    void DrawHist(TH1D* hist);
-    void DrawHist(TH2D* hist);
+    std::map<TH1D*,const HistPlotVar*>             m_HistToVar;
+    std::map<TH2D*,std::pair<const HistPlotVar*,
+			     const HistPlotVar*> > m_HistToVars;
 
-    void ClearHist();
+    void DrawPlot(const HistPlotVar& var, 
+		  const HistPlotCatList& cats,
+		  bool invert_colors = false);
+    void DrawPlot(const std::pair<const HistPlotVar*, 
+		  const HistPlotVar*>& vars,
+		  const HistPlotCategory& cat,
+		  bool invert_colors = false);
 
   };
 

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   SelfAssemblingRecoFrame.cc
@@ -33,60 +33,63 @@
 #include "RestFrames/VisibleState.hh"
 #include "RestFrames/CombinatoricState.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // SelfAssemblingRecoFrame class
   ///////////////////////////////////////////////
-  SelfAssemblingRecoFrame::SelfAssemblingRecoFrame(const string& sname, const string& stitle)
+  SelfAssemblingRecoFrame::SelfAssemblingRecoFrame(const std::string& sname, 
+						   const std::string& stitle)
     : DecayRecoFrame(sname,stitle)
   {
     m_RType = RDSelfAssembling;
     m_IsAssembled = false;
-    m_IsBackedUp = false;
-    m_Body_UnAssembled = false;
-    m_Mind_UnAssembled = false;
     m_Nvisible = 0;
     m_Ndecay = 0;
+    m_NewEvent = true;
   }
   
   SelfAssemblingRecoFrame::~SelfAssemblingRecoFrame() {}
 
   void SelfAssemblingRecoFrame::Clear(){
+    if(m_IsAssembled) Disassemble();
     m_VisibleFrames.Clear();
     m_DecayFrames.Clear();
     ReconstructionFrame::Clear();
   }
 
-  bool SelfAssemblingRecoFrame::ClearEventRecursive(){
+  bool SelfAssemblingRecoFrame::ResetRecoFrame(){
     if(!IsSoundMind()){
       UnSoundMind(RF_FUNCTION);
       return SetSpirit(false);
     }
-    //ReconstructionFrame::ClearEventRecursive();
-    Disassemble();
-    return ReconstructionFrame::ClearEventRecursive();
+    if(m_IsAssembled) Disassemble();
+    m_NewEvent = true;
+    return SetMind(true);
+  }
+
+  void SelfAssemblingRecoFrame::RemoveChildFrame(RestFrame& frame){
+    m_ChildFrames_UnAssembled.Remove(frame);
+    ReconstructionFrame::RemoveChildFrame(frame);
   }
 
   void SelfAssemblingRecoFrame::Disassemble(){
-    if(!m_IsAssembled) return;
-
     m_Nvisible = 0;
     m_Ndecay = 0;
   
     // replace frames with unassembled ones
     const LabRecoFrame& lab_frame = static_cast<const LabRecoFrame&>(GetLabFrame());
     lab_frame.RemoveTreeStates(m_VisibleStates);
-    RemoveChildren();
+    RestFrameList ChildFrames = m_ChildFrames_UnAssembled;
+    RemoveChildFrames();
+    m_ChildFrames_UnAssembled = ChildFrames;
     ClearNewFrames();
     AddChildFrames(m_ChildFrames_UnAssembled);
-
+    
     if(!InitializeTreeRecursive()){
       m_Log << LogWarning;
       m_Log << "Problem with recursive tree after disassembly";
-      m_Log << m_End;
+      m_Log << LogEnd;
       SetBody(false);
       return;
     } else 
@@ -95,7 +98,7 @@ namespace RestFrames {
     if(!InitializeAnalysisRecursive()){
       m_Log << LogWarning;
       m_Log << "Problem connecting states after disassembly";
-      m_Log << m_End;
+      m_Log << LogEnd;
       SetMind(false);
       return;
     } else 
@@ -115,72 +118,77 @@ namespace RestFrames {
     // new Visible States
     m_VisibleStates.Clear();
     // new Frames associated with States
-    vector<RestFrame*> frames;
+    std::vector<RestFrame*> frames;
     // States' four-vector
-    vector<TLorentzVector> Ps; 
+    std::vector<TLorentzVector> Ps; 
 
     // clear unassembled lists
     m_ChildFrames_UnAssembled.Clear();
-    m_ChildFrames_UnAssembled += GetChildren();
+    m_ChildFrames_UnAssembled += GetChildFrames();
+    
     int N = GetNChildren();
     for(int i = 0; i < N; i++){
       ReconstructionFrame& frame = GetChildFrame(i);
       bool expand_frame = false;
-      if(m_ChildStates[&frame].GetN() == 1 && frame.IsVisibleFrame())
-	if(m_ChildStates[&frame][0].IsCombinatoricState()){
+      if(GetChildStates(frame).GetN() == 1 && frame.IsVisibleFrame())
+	if(GetChildStates(frame)[0].IsCombinatoricState()){
 	  expand_frame = true;
-	  RFList<VisibleState> elements = 
-	    static_cast<CombinatoricState&>(m_ChildStates[&frame][0]).GetElements();
+	  VisibleStateList const& elements = 
+	    static_cast<CombinatoricState&>(GetChildStates(frame)[0]).GetElements();
 	  int Nelement = elements.GetN();
 	  for(int e = 0; e < Nelement; e++){
 	    VisibleState& element = elements[e];
-	    RestFrame& new_frame = GetNewVisibleFrame(frame.GetName(),frame.GetTitle());
+	    VisibleRecoFrame& new_frame =
+	      GetNewVisibleFrame(frame.GetName(),frame.GetTitle());
+	    new_frame.SetCharge(element.GetCharge());
 	    element.AddFrame(new_frame);
 	    frames.push_back(&new_frame);
 	    TLorentzVector V = element.GetFourVector();
 	    if(V.M() < 0.) V.SetVectM(V.Vect(),0.);
 	    Ps.push_back(V);
-	    // states.Add(element);
-	    m_VisibleStates.Add(element);
+	    m_VisibleStates += element;
 	  }
 	  if(Nelement < 1){
 	    expand_frame = false;
 	  }
 	}
       if(!expand_frame){
-	TLorentzVector V = m_ChildStates[&frame].GetFourVector();
+	TLorentzVector V = GetChildStates(frame).GetFourVector();
 	if(V.M() < 0.) V.SetVectM(V.Vect(),0.);
 	Ps.push_back(V);
 	frames.push_back(&frame);
       }
     }
-    RemoveChildren();
-    m_ChildStates.clear();
+
+    RestFrameList ChildFrames = m_ChildFrames_UnAssembled;
+    RemoveChildFrames();
+    m_ChildFrames_UnAssembled = ChildFrames;
     AssembleRecursive(*this, frames, Ps); 
     if(!InitializeTreeRecursive()){
       m_Log << LogWarning;
       m_Log << "Problem with recursive tree after assembly";
-      m_Log << m_End;
+      m_Log << LogEnd;
       SetBody(false);
       return;
     }
+    
     SetMind(true);
     const LabRecoFrame& lab_frame = static_cast<const LabRecoFrame&>(GetLabFrame());
-    //lab_frame.AddTreeStates(states);
     lab_frame.AddTreeStates(m_VisibleStates);
     if(!InitializeAnalysisRecursive()){
       m_Log << LogWarning;
       m_Log << "Problem connecting states after assembly";
-      m_Log << m_End;
+      m_Log << LogEnd;
       SetMind(false);
       return;
     }
-    //lab_frame.RemoveTreeStates(states);
 
     m_IsAssembled = true;
   }
 
-  void SelfAssemblingRecoFrame::AssembleRecursive(RestFrame& frame, vector<RestFrame*>& frames, vector<TLorentzVector>& Ps){
+  void SelfAssemblingRecoFrame::AssembleRecursive(RestFrame& frame, 
+						  std::vector<RestFrame*>& frames, 
+						  std::vector<TLorentzVector>& Ps){
     int Ninput = frames.size();
     if(Ninput <= 2){
       for(int i = 0; i < Ninput; i++) frame.AddChildFrame(*frames[i]);
@@ -191,12 +199,13 @@ namespace RestFrames {
     for(int i = 0; i < Ninput; i++) TOT += Ps[i];
     TVector3 boost = TOT.BoostVector();
     if(boost.Mag() > 1.)
-      boost.SetMagThetaPhi(1.-1e-12,boost.Theta(),boost.Phi());
+      boost.SetMagThetaPhi(0.,boost.Theta(),boost.Phi());
     for(int i = 0; i < Ninput; i++){
-      Ps[i].Boost(-boost);
       if(Ps[i].M() < 0.)
-	Ps[i].SetPtEtaPhiM(Ps[i].Pt(),Ps[i].Eta(),Ps[i].Phi(),0.);
+	Ps[i].SetVectM(Ps[i].Vect(),Ps[i].M());
+      Ps[i].Boost(-boost);
     }
+
     int ip_max[2];
     int jp_max[2];
     for(int i = 0; i < 2; i++) ip_max[i] = -1;
@@ -215,7 +224,7 @@ namespace RestFrames {
 	}
 	// Loop over all jets
 	for(int i = 0; i < Ninput; i++){
-	  if((i == ip[0]) || (i ==ip[1])) continue;
+	  if((i == ip[0]) || (i == ip[1])) continue;
 	  int ihem = int(Ps[i].Vect().Dot(nRef) > 0.);
 	  Nhem[ihem]++;
 	  hem[ihem] += Ps[i];
@@ -237,17 +246,20 @@ namespace RestFrames {
 	}
       }
     }
-    vector<RestFrame*> child_frames[2];
-    vector<TLorentzVector> child_Ps[2];
+
+    std::vector<RestFrame*> child_frames[2];
+    std::vector<TLorentzVector> child_Ps[2];
     TLorentzVector hem[2];
     for(int i = 0; i < 2; i++){
       hem[i].SetPxPyPzE(0.,0.,0.,0.);
     }
+   
     for(int i = 0; i < 2; i++){
       child_frames[jp_max[i]].push_back(frames[ip_max[i]]);
       child_Ps[jp_max[i]].push_back(Ps[ip_max[i]]);
       hem[jp_max[i]] += Ps[ip_max[i]];
     }
+
     TVector3 nRef = Ps[ip_max[0]].Vect().Cross(Ps[ip_max[1]].Vect());
     for(int i = 0; i < Ninput; i++){
       if((i == ip_max[0]) || (i == ip_max[1])) continue;
@@ -256,7 +268,7 @@ namespace RestFrames {
       child_Ps[ihem].push_back(Ps[i]);
       hem[ihem] += Ps[i];
     }
-
+   
     int flip = int(hem[1].M() > hem[0].M());
     for(int i = 0; i < 2; i++){
       int j = (i+flip)%2;
@@ -270,24 +282,20 @@ namespace RestFrames {
     }
   }
 
-  bool SelfAssemblingRecoFrame::AnalyzeEventRecursive(){
-    // Disassemble Frame tree if it assembled
-    if(m_IsAssembled) Disassemble();
-    if(!ReconstructionFrame::AnalyzeEventRecursive()){
-      m_Log << LogWarning;
-      m_Log << "Unable to recursively analyze event with ";
-      m_Log << "disassembled SelfAssemblingRecoFrame" << m_End;
-      return SetSpirit(false);
+  bool SelfAssemblingRecoFrame::ReconstructFrame(){
+    if(m_NewEvent){
+      m_NewEvent = false;
+      if(m_IsAssembled) Disassemble();
+      if(!AnalyzeEventRecursive()){
+	m_Log << LogWarning;
+	m_Log << "Unable to recursively analyze event with ";
+	m_Log << "disassembled SelfAssemblingRecoFrame" << LogEnd;
+	return SetSpirit(false);
+      }
+      Assemble();
     }
-    // Assemble Frame tree
-    Assemble();
-    if(!ReconstructionFrame::AnalyzeEventRecursive()){
-      m_Log << LogWarning;
-      m_Log << "Unable to recursively analyze event with ";
-      m_Log << "assembled SelfAssemblingRecoFrame" << m_End;
-      return SetSpirit(false);
-    }
-    return SetSpirit(true);
+
+    return ReconstructionFrame::ReconstructFrame();
   }
 
   void SelfAssemblingRecoFrame::ClearNewFrames(){
@@ -297,15 +305,16 @@ namespace RestFrames {
     for(int i = 0; i < N; i++) m_VisibleFrames[i].Clear();
   }
 
-  ReconstructionFrame& SelfAssemblingRecoFrame::GetNewDecayFrame(const string& sname, const string& stitle){
+  DecayRecoFrame& SelfAssemblingRecoFrame::GetNewDecayFrame(const std::string& sname, 
+							    const std::string& stitle){
     if(m_Ndecay < m_DecayFrames.GetN()){
       m_Ndecay++;
       return m_DecayFrames.Get(m_Ndecay-1);
     }
     char strn[10];
     sprintf(strn,"%d",m_Ndecay+1);
-    string name  = sname+"_"+string(strn);
-    string title = "#left("+stitle+"#right)_{"+string(strn)+"}";
+    std::string name  = sname+"_"+std::string(strn);
+    std::string title = "#left("+stitle+"#right)_{"+std::string(strn)+"}";
     DecayRecoFrame* framePtr = new DecayRecoFrame(name, title);
     
     m_DecayFrames.Add(*framePtr);
@@ -314,15 +323,16 @@ namespace RestFrames {
     return *framePtr;
   }
 
-  ReconstructionFrame& SelfAssemblingRecoFrame::GetNewVisibleFrame(const string& sname, const string& stitle){
+  VisibleRecoFrame& SelfAssemblingRecoFrame::GetNewVisibleFrame(const std::string& sname, 
+								const std::string& stitle){
     if(m_Nvisible < m_VisibleFrames.GetN()){
       m_Nvisible++;
       return m_VisibleFrames.Get(m_Nvisible-1);
     }
     char strn[10];
     sprintf(strn,"%d",m_Nvisible+1);
-    string name  = sname+"_"+string(strn);
-    string title = "#left("+stitle+"#right)_{"+string(strn)+"}";
+    std::string name  = sname+"_"+std::string(strn);
+    std::string title = "#left("+stitle+"#right)_{"+std::string(strn)+"}";
     VisibleRecoFrame* framePtr = new VisibleRecoFrame(name, title);
     
     m_VisibleFrames.Add(*framePtr);
@@ -334,10 +344,11 @@ namespace RestFrames {
   RestFrame const& SelfAssemblingRecoFrame::GetFrame(const RFKey& key) const {
     if(!m_IsAssembled)
       return RestFrame::Empty();
-    int N = m_ChildStates.size();
+    
+    int N = GetNChildren();
     for(int i = 0; i < N; i++){
-      if(m_ChildStates[&GetChildFrame(i)].Contains(key))
-	return m_ChildStates[&GetChildFrame(i)].Get(key).GetListFrames()[0];
+      if(GetChildStates(i).Contains(key))
+	return GetChildStates(i).Get(key).GetListFrames()[0];
     }
 
     return RestFrame::Empty();

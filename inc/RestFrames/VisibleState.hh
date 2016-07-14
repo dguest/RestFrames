@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   VisibleState.hh
@@ -32,15 +32,14 @@
 
 #include "RestFrames/State.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class VisibleRecoFrame;
 
   class VisibleState : public State {
   public:
-    VisibleState(const string& sname, const string& stitle);
+    VisibleState(const std::string& sname,
+		 const std::string& stitle);
     VisibleState();
     virtual ~VisibleState();
 
@@ -48,21 +47,23 @@ namespace RestFrames {
 
     static VisibleState& Empty();
 
-    virtual void AddFrame(RestFrame& frame);
+    virtual void AddFrame(const RestFrame& frame);
 
-    virtual RestFrame& GetFrame() const;
+    virtual RestFrame const& GetFrame() const;
 
     virtual bool IsFrame(const RestFrame& frame) const;
-    virtual bool IsFrames(const RestFrames::RFList<RestFrame>& frames) const;
+    virtual bool IsFrames(const ConstRestFrameList& frames) const;
 	
     virtual void SetLabFrameFourVector();
+    virtual void SetCharge(const RFCharge& charge);
+    virtual void SetCharge(int charge = 0);
+    virtual void SetCharge(int charge_num, int charge_den);
 
   protected:
-    VisibleRecoFrame* m_FramePtr;
+    const VisibleRecoFrame* m_FramePtr;
 
   private:
     static VisibleState m_Empty;
-    void Init();
 
   };
 

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricJigsaw.cc
@@ -29,29 +29,25 @@
 
 #include "RestFrames/CombinatoricJigsaw.hh"
 #include "RestFrames/MinMassesCombJigsaw.hh"
-#include "RestFrames/RestFrame.hh"
-
-using namespace std;
 
 namespace RestFrames {
 
-  ///////////////////////////////////////////////
-  // CombinatoricJigsaw class
-  ///////////////////////////////////////////////
-
-  CombinatoricJigsaw::CombinatoricJigsaw(const string& sname,const string& stitle)
-    : Jigsaw(sname, stitle)
+  CombinatoricJigsaw::CombinatoricJigsaw(const std::string& sname,
+					 const std::string& stitle,
+					 int Ncomb, int Nobject)
+    : Jigsaw(sname, stitle, Ncomb, Nobject), 
+      m_Ncomb(Ncomb), m_Nobj(Nobject)
   {
-    Init();
+    m_Type = kCombinatoricJigsaw;
+    for(int i = 0; i < m_Ncomb; i++){
+      m_ChildStates += GetNewChildState();
+    }
   }
-
-  CombinatoricJigsaw::CombinatoricJigsaw() : Jigsaw() {}
+  
+  CombinatoricJigsaw::CombinatoricJigsaw()
+    : Jigsaw(), m_Ncomb(0), m_Nobj(0) {}
 
   CombinatoricJigsaw::~CombinatoricJigsaw() {}
-
-  void CombinatoricJigsaw::Init(){
-    m_Type = kCombinatoricJigsaw;
-  }
 
   void CombinatoricJigsaw::Clear(){
     Jigsaw::Clear();
@@ -80,49 +76,101 @@ namespace RestFrames {
     Jigsaw::SetParentState(state);
   }
 
-  CombinatoricState& CombinatoricJigsaw::GetParentState() const {
+  CombinatoricState const& CombinatoricJigsaw::GetParentState() const {
     if(!Jigsaw::GetParentState())
       return CombinatoricState::Empty();
     else
-      return static_cast<CombinatoricState&>(Jigsaw::GetParentState());
+      return static_cast<const CombinatoricState&>(Jigsaw::GetParentState());
   }
 
-  CombinatoricState& CombinatoricJigsaw::GetChildState(int i) const{
+  CombinatoricState& CombinatoricJigsaw::GetChildState(int i) const {
     if(!Jigsaw::GetChildState(i)) 
       return CombinatoricState::Empty();
     else
       return static_cast<CombinatoricState&>(Jigsaw::GetChildState(i));
   }
 
-  void CombinatoricJigsaw::AddFrame(RestFrame& frame, int i){
+  void CombinatoricJigsaw::AddCombFrame(const RestFrame& frame, int i){
     if(!frame) return;
-    if(!GetGroup()) return;
-    
-    RFList<RestFrame> frames = 
-      frame.GetListVisibleFrames()+frame.GetListInvisibleFrames();
-    int N = frames.GetN();
-    for(int f = 0; f < N; f++){
-      if(GetGroup().ContainsFrame(frames[f]))
-	AddChildFrame(frames[f], i);
-      else 
-	AddDependancyFrame(frames[f], i);
-    }
-  }
 
-  void CombinatoricJigsaw::AddFrames(const RFList<RestFrame>& frames, int i){
+    ConstRestFrameList frames = 
+      frame.GetListVisibleFrames();
     int N = frames.GetN();
     for(int f = 0; f < N; f++)
-      AddFrame(frames[f],i);
+      AddChildFrame(frames[f], i);
   }
 
-  bool CombinatoricJigsaw::InitializeJigsawExecutionList(RFList<Jigsaw>& exec_jigsaws){
+  void CombinatoricJigsaw::AddCombFrames(const ConstRestFrameList& frames, int i){
+    int N = frames.GetN();
+    for(int f = 0; f < N; f++)
+      AddCombFrame(frames[f], i);
+  }
+  
+  void CombinatoricJigsaw::AddObjectFrame(const RestFrame& frame, int i){
+    if(!frame) return;
+
+    ConstRestFrameList frames = 
+      frame.GetListVisibleFrames()+
+      frame.GetListInvisibleFrames();
+    int N = frames.GetN();
+    for(int f = 0; f < N; f++)
+      AddDependancyFrame(frames[f], i);
+  }
+  
+  void CombinatoricJigsaw::AddObjectFrames(const ConstRestFrameList& frames, int i){
+    int N = frames.GetN();
+    for(int f = 0; f < N; f++)
+      AddObjectFrame(frames[f], i);
+  }
+
+  void CombinatoricJigsaw::SetCombCharge(const RFCharge& charge, int i){
+    if(i < 0 || i >= m_Ncomb)
+      return;
+
+    m_ChargeForChild[i] = charge;
+  }
+
+  void CombinatoricJigsaw::SetCombCharge(int charge, int i){
+    SetCombCharge(RFCharge(charge), i);
+  }
+
+  void CombinatoricJigsaw::SetCombCharge(int charge_num, int charge_den, int i){
+    SetCombCharge(RFCharge(charge_num, charge_den), i);
+  }
+
+  void CombinatoricJigsaw::UnsetCombCharge(int i){
+    if(m_ChargeForChild.count(i) > 0)
+      m_ChargeForChild.erase(i);
+  }
+
+  void CombinatoricJigsaw::SetObjectCharge(const RFCharge& charge, int i){
+    if(i < 0 || i >= m_Nobj)
+      return;
+
+    m_ChargeForObject[i] = charge;
+  }
+
+  void CombinatoricJigsaw::SetObjectCharge(int charge, int i){
+    SetObjectCharge(RFCharge(charge), i);
+  }
+
+  void CombinatoricJigsaw::SetObjectCharge(int charge_num, int charge_den, int i){
+    SetObjectCharge(RFCharge(charge_num, charge_den), i);
+  }
+
+  void CombinatoricJigsaw::UnsetObjectCharge(int i){
+    if(m_ChargeForObject.count(i) > 0)
+      m_ChargeForObject.erase(i);
+  }
+  
+  bool CombinatoricJigsaw::InitializeJigsawExecutionList(JigsawList& exec_jigsaws){
     if(!IsSoundMind()) return false;
     if(exec_jigsaws.Contains(*this)) return true;
 
     m_ExecuteJigsaws.Clear();
 
     // Add group dependancy jigsaws first
-    RFList<Jigsaw> group_jigsaws; 
+    JigsawList group_jigsaws; 
     FillGroupJigsawDependancies(group_jigsaws);
     group_jigsaws -= *this;
 
@@ -148,7 +196,7 @@ namespace RestFrames {
 	m_DependancyJigsaws -= jigsaw;
 	continue;
       }
-      RFList<Jigsaw> temp_exec_jigsaws = exec_jigsaws;
+      JigsawList temp_exec_jigsaws = exec_jigsaws;
       temp_exec_jigsaws += m_ExecuteJigsaws;
       temp_exec_jigsaws += *this;
       if(!jigsaw.InitializeJigsawExecutionList(temp_exec_jigsaws))
@@ -168,7 +216,7 @@ namespace RestFrames {
   CombinatoricState& CombinatoricJigsaw::GetNewChildState(){
     char strn[10];
     sprintf(strn,"%d",GetNChildren());
-    string name = GetName()+"_"+string(strn);
+    std::string name = GetName()+"_"+std::string(strn);
     CombinatoricState* statePtr = new CombinatoricState(name, name);
     AddDependent(statePtr);
     return *statePtr;
@@ -188,17 +236,51 @@ namespace RestFrames {
 
     if(!InitializeCombinatoric()){
       m_Log << LogWarning;
-      m_Log << "Problem initializing event info" << m_End;
+      m_Log << "Problem initializing event info" << LogEnd;
       return SetSpirit(false);
     }
 
     if(!LoopCombinatoric()){
       m_Log << LogWarning;
-      m_Log << "Problem looping over combinatorics" << m_End;
+      m_Log << "Problem looping over combinatorics" << LogEnd;
       return SetSpirit(false);
     }
 
     return SetSpirit(true);
+  }
+
+  bool CombinatoricJigsaw::InitializeAnalysis(){
+    if(!Jigsaw::InitializeAnalysis())
+      return SetMind(false);
+
+    CombinatoricGroup& group = GetGroup();
+
+    m_NForChild.clear();
+    m_NExclusive.clear();
+
+    m_NinputTOT = 0;
+    m_NExclusiveTOT = true;
+
+    for(int i = 0; i < m_Ncomb; i++){
+      RestFrameList const& frames = GetChildState(i).GetListFrames();
+      int Nf = frames.GetN();
+      int NTOT = 0;
+      bool exclTOT = true;
+      for(int f = 0; f < Nf; f++){
+	int N = -1;
+	bool excl = false;
+	group.GetNElementsForFrame(frames[f], N, excl);
+	if(N < 0) return SetMind(false);
+	NTOT += N;
+	exclTOT = exclTOT && excl;
+      }
+      m_NForChild.push_back(NTOT);
+      m_NExclusive.push_back(exclTOT);
+      m_NinputTOT += NTOT;
+      m_NExclusiveTOT = m_NExclusiveTOT && exclTOT;
+    }
+
+    return SetMind(true);
   }
 
   bool CombinatoricJigsaw::InitializeCombinatoric(){
@@ -214,129 +296,190 @@ namespace RestFrames {
     m_InputStates.Clear();
     m_InputStates = GetParentState().GetElements();
 
-    m_NForChild.clear();
-    m_NExclusive.clear();
-
-    int NTOTOT = 0;
-    bool exclTOTOT = true;
-    int Nc = GetNChildren();
-    for(int i = 0; i < Nc; i++){
-      RFList<RestFrame> frames = GetChildState(i).GetListFrames();
-      int Nf = frames.GetN();
-      int NTOT = 0;
-      bool exclTOT = true;
-      for(int f = 0; f < Nf; f++){
-	int N = -1;
-	bool excl = false;
-	GetGroup().GetNElementsForFrame(frames[f], N, excl);
-	if(N < 0) return SetSpirit(false);
-	NTOT += N;
-	exclTOT = exclTOT && excl;
-      }
-      m_NForChild[&GetChildState(i)] = NTOT;
-      m_NExclusive[&GetChildState(i)] = exclTOT;
-      NTOTOT += NTOT;
-      exclTOTOT = exclTOTOT && exclTOT;
-    }
-
-    if(m_InputStates.GetN() < NTOTOT){
+    if(m_InputStates.GetN() < m_NinputTOT){
       m_Log << LogWarning;
       m_Log << "Unable to execute Jigsaw. ";
-      m_Log << "Insufficienct number of inputs.";
-      m_Log << m_End;
+      m_Log << "Insufficienct number of inputs: ";
+      m_Log << m_NinputTOT << " (required) != ";
+      m_Log << m_InputStates.GetN() << " (provided)";
+      m_Log << LogEnd;
       return SetSpirit(false);
     }
 
-    if(exclTOTOT &&
-       (m_InputStates.GetN() != NTOTOT)){
+    if(m_NExclusiveTOT &&
+       (m_InputStates.GetN() != m_NinputTOT)){
       m_Log << LogWarning;
       m_Log << "Unable to execute Jigsaw. ";
       m_Log << "Incorrect number of exclusive inputs: ";
-      m_Log << NTOTOT << " (required) != ";
+      m_Log << m_NinputTOT << " (required) != ";
       m_Log << m_InputStates.GetN() << " (provided)";
-      m_Log << m_End;
+      m_Log << LogEnd;
       return SetSpirit(false);
     }
 
     return SetSpirit(true);
   }
 
+  int CombinatoricJigsaw::GetNInputStates() const {
+    return m_InputStates.GetN();
+  }
+
+  VisibleState& CombinatoricJigsaw::GetInputState(int i) const {
+    return m_InputStates[i];
+  }
+
+  int CombinatoricJigsaw::GetNinputForChild(int i) const {
+    if(i < 0 || i >= m_Ncomb)
+      return 0;
+    return m_NForChild[i];
+  }
+
+  bool CombinatoricJigsaw::IsNinputExclForChild(int i) const {
+    if(i < 0 || i >= m_Ncomb)
+      return false;
+    return m_NExclusive[i];
+  }
+
+  bool CombinatoricJigsaw::IsChargeSetForChild(int i) const {
+    return !(m_ChargeForChild.count(i) == 0);
+  }
+  
+  RFCharge CombinatoricJigsaw::GetChargeForChild(int i) const {
+    if(IsChargeSetForChild(i))
+      return m_ChargeForChild[i];
+    else 
+      return RFCharge();
+  }
+
+  bool CombinatoricJigsaw::IsChargeSetForObject(int i) const {
+    return !(m_ChargeForObject.count(i) == 0);
+  }
+
+  RFCharge CombinatoricJigsaw::GetChargeForObject(int i) const {
+    if(IsChargeSetForObject(i))
+      return m_ChargeForObject[i];
+    else 
+      return RFCharge();
+  }
+
   bool CombinatoricJigsaw::LoopCombinatoric(){
-    int Ninput = m_InputStates.GetN();
-    int Nout   = GetNChildren();	
+    int Ninput = m_InputStates.GetN();	
 
     int N_comb = 1;
-    for(int i = 0; i < Ninput; i++) N_comb *= Nout;
-   
-    vector<int> Nhem;
-    for(int i = 0; i < Nout; i++)
-      Nhem.push_back(0);
+    for(int i = 0; i < Ninput; i++) N_comb *= m_Ncomb;
     
-    int c_max = -1;
-    double metric_max = -1; 
+    int c_min = -1;
+    double metric_min = -1; 
    
     for(int c = 0; c < N_comb; c++){
       int key = c;
-      for(int i = 0; i < Nout; i++){
-	Nhem[i] = 0;
+      for(int i = 0; i < m_Ncomb; i++)
 	GetChildState(i).ClearElements();
-      } 
 
       // set output states for combinatoric;
       for(int i = 0; i < Ninput; i++){
-	int ihem = key%Nout;
-	key /= Nout;
-	Nhem[ihem]++;
+	int ihem = key%m_Ncomb;
+	key /= m_Ncomb;
 	GetChildState(ihem).AddElement(m_InputStates[i]);
       }
-      
+
       // check validity of combinatoric
       bool valid = true;
-      for(int i = 0; i < Nout; i++){
-	if(m_NExclusive[&GetChildState(i)]){
-	  if(Nhem[i] != m_NForChild[&GetChildState(i)]) 
+      for(int i = 0; i < m_Ncomb; i++){
+	if(IsNinputExclForChild(i)){
+	  if(GetChildState(i).GetNElements() != GetNinputForChild(i)){
 	    valid = false;
+	    break;
+	  }
 	} else {
-	  if(Nhem[i] < m_NForChild[&GetChildState(i)]) 
+	  if(GetChildState(i).GetNElements() < GetNinputForChild(i)){
 	    valid = false;
+	    break;
+	  }
+	}
+	if(IsChargeSetForChild(i)){
+	  if(GetChildState(i).GetCharge() != GetChargeForChild(i)){
+	    valid = false;
+	    break;
+	  }
 	}
       }
       if(!valid)
 	continue;
 
-      // Execute depedancy Jigsawsfor this combintoric
-      ExecuteDependancyJigsaws();
+      // Execute depedancy Jigsaws for this combintoric
+      if(!ExecuteDependancyJigsaws())
+	continue;
+
+      // check validity of objects
+      for(int i = 0; i < m_Nobj; i++){
+	if(IsChargeSetForObject(i)){
+	  if(GetDependancyStates(i).GetCharge() != GetChargeForObject(i)){
+	    valid = false;
+	    break;
+	  }
+	}
+      }
+      if(!valid)
+	continue;
 
       // Evaluate metric for this combinatoric
-      double metric = EvaluateMetric();
+      double metric;
+      if(!EvaluateMetric(metric))
+	continue;
 
-      if(metric >= metric_max){
-	metric_max = metric;
-	c_max = c;
+      if(metric < metric_min || c_min < 0){
+	metric_min = metric;
+	c_min = c;
+      }
+
+      if((metric < metric_min && metric >= 0.) || c_min < 0){
+	metric_min = metric;
+	c_min = c;
       }
     }
    
-    if(c_max < 0){
+    if(c_min < 0){
       m_Log << LogWarning;
-      m_Log << "Unable to find combinatoric with positive metric";
-      m_Log << m_End;
+      m_Log << "Unable to find combinatoric satisfying ";
+      m_Log << "requested conditions." << LogEnd;
       return SetSpirit(false);
     }
      
     // Set outputs to best combinatoric
-    for(int i = 0; i < 2; i++) 
+    for(int i = 0; i < m_Ncomb; i++) 
       GetChildState(i).ClearElements();
-    int key = c_max;
+    int key = c_min;
     for(int i = 0; i < Ninput; i++){
-      int ihem = key%Nout;
-      key /= Nout;
+      int ihem = key%m_Ncomb;
+      key /= m_Ncomb;
       GetChildState(ihem).AddElement(m_InputStates[i]);
     }
   
     // Execute depedancy Jigsaws
-    ExecuteDependancyJigsaws();
-
+    if(!ExecuteDependancyJigsaws())
+      return SetSpirit(false);
+      
     return SetSpirit(true);
+  }
+
+  bool CombinatoricJigsaw::IsSoundBody() const {
+    if(RFBase::IsSoundBody())
+      return true;
+
+    if(!Jigsaw::IsSoundBody())
+      return SetBody(false);
+    
+    for(int i = 0; i < m_Nobj; i++){
+      if(GetDependancyFrames(i).GetN() <= 0){
+	m_Log << LogWarning;
+	m_Log << "Empty collection of object frames: " << i;
+	m_Log << LogEnd;
+	return SetBody(false);
+      }
+    }
+
+    return SetBody(true);
   }
 
 }

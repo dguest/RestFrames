@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RFList.hh
@@ -32,19 +32,20 @@
 
 #include <vector>
 
-using namespace std;
-
 class TLorentzVector;
 class TVector3;
 
 namespace RestFrames {
   
   class RFKey;
-  class State;
+  class RFCharge;
+
   class RestFrame;
+  class State;
+  
   template <class T>
   class RFList;
-
+  
   ///////////////////////////////////////////////
   // RFListBase class
   ///////////////////////////////////////////////
@@ -135,69 +136,69 @@ namespace RestFrames {
       return comp;
     }
 
-    Derived& operator=(T& obj){
+    Derived& operator = (T& obj){
       Clear();
       Add(obj);
       return static_cast<Derived&>(*this);
     }
 
     template <class U>
-    Derived& operator=(const RFList<U>& objs){
+    Derived& operator = (const RFList<U>& objs){
       Clear();
       Add(objs);
       return static_cast<Derived&>(*this);
     }
 
-    T& operator[](int i) const;
+    T& operator [] (int i) const;
 
-    T& operator[](const RFKey& key) const;
+    T& operator [] (const RFKey& key) const;
 
-    bool operator==(const T& obj) const;
+    bool operator == (const T& obj) const;
 
     template <class U>
-    bool operator==(const RFList<U>& objs) const {
+    bool operator == (const RFList<U>& objs) const {
       return IsSame(objs);
     }
 
-    bool operator!=(const T& obj) const;
+    bool operator != (const T& obj) const;
 
     template <class U>
-    bool operator!=(const RFList<U>& objs) const {
+    bool operator != (const RFList<U>& objs) const {
       return !IsSame(objs);
     }
 
-    Derived operator+(T& obj) const;
+    Derived operator + (T& obj) const;
 
     template <class U>
-    Derived operator+(const RFList<U>& objs) const {
+    Derived operator + (const RFList<U>& objs) const {
       Derived list = static_cast<const Derived&>(*this);
       list.Add(objs);
       return list;
     }
 
-    Derived operator-(const T& obj) const;
+    Derived operator - (const T& obj) const;
 
     template <class U>
     Derived operator-(const RFList<U>& objs) const;
 
-    Derived& operator+=(T& obj);
+    Derived& operator += (T& obj);
 
     template <class U>
-    Derived& operator+=(const RFList<U>& objs){
+    Derived& operator += (const RFList<U>& objs){
       Add(objs);
       return static_cast<Derived&>(*this);
     }
 
-    Derived& operator-=(const T& obj);
+    Derived& operator -= (const T& obj);
 
     template <class U>
-    Derived& operator-=(const RFList<U>& objs){
+    Derived& operator -= (const RFList<U>& objs){
       Remove(objs);
       return static_cast<Derived&>(*this);
     }
     
   protected:
-    vector<T*> m_Objs;
+    std::vector<T*> m_Objs;
   
   };
     
@@ -232,6 +233,7 @@ namespace RestFrames {
 
     State& GetFrame(const RestFrame& frame) const;
     TLorentzVector GetFourVector() const;
+    RFCharge GetCharge() const;
     void Boost(const TVector3& B) const;
   };
 
@@ -258,8 +260,31 @@ namespace RestFrames {
     TLorentzVector GetInvisibleFourVector(const RestFrame& frame) const;
     double GetEnergy(const RestFrame& frame) const;
     double GetMomentum(const RestFrame& frame) const;
+    RFCharge GetCharge() const;
   };
 
+  class RFBase;
+  class Jigsaw;
+  class Group;
+  class VisibleState;
+  class HistPlotVar;
+  class HistPlotCategory;
+  
+  typedef RestFrames::RFList<RFBase>            RFBaseList;
+  typedef RestFrames::RFList<RestFrame>         RestFrameList;
+  typedef RestFrames::RFList<const RestFrame>   ConstRestFrameList;
+  typedef RestFrames::RFList<Group>             GroupList;
+  typedef RestFrames::RFList<const Group>       ConstGroupList;
+  typedef RestFrames::RFList<Jigsaw>            JigsawList;
+  typedef RestFrames::RFList<const Jigsaw>      ConstJigsawList;
+  typedef RestFrames::RFList<State>             StateList;
+  typedef RestFrames::RFList<VisibleState>      VisibleStateList;
+  typedef RestFrames::RFList<HistPlotVar>       HistPlotVarList;
+  typedef RestFrames::RFList<HistPlotCategory>  HistPlotCatList;
+
+  typedef std::vector<RestFrames::RFList<RestFrame> > RestFrameListList;
+  typedef std::vector<RestFrames::RFList<State> >     StateListList;
+  
 }
 
 #endif

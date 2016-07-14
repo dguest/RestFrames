@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   RestFrame.hh
@@ -31,8 +31,7 @@
 #define RestFrame_HH
 
 #include "RestFrames/RFBase.hh"
-
-using namespace std;
+#include "RestFrames/RFCharge.hh"
 
 namespace RestFrames {
 
@@ -50,7 +49,7 @@ namespace RestFrames {
     /// 
     /// \param sname    class instance name used for log statements
     /// \param stitle   class instance title used in figures
-    RestFrame(const string& sname, const string& stitle);
+    RestFrame(const std::string& sname, const std::string& stitle);
     
     /// \brief Empty constructor
     RestFrame();
@@ -66,9 +65,6 @@ namespace RestFrames {
 
     /// \brief Retrieve axis which defines transverse plane
     static TVector3 const& GetAxis();
-
-    /// \brief Returns empty instance of class
-    static RestFrame& Empty();
 
     /// \brief Clears RestFrame of all connections to other objects
     virtual void Clear();
@@ -104,7 +100,7 @@ namespace RestFrames {
     bool IsGenFrame() const;
 
     /// \brief String of information about RestFrame
-    virtual string PrintString(LogType type = LogVerbose) const;
+    virtual std::string PrintString(LogType type = LogVerbose) const;
     
     ///@}
 
@@ -128,7 +124,7 @@ namespace RestFrames {
     /// \brief Add a list of children to this frame
     ///
     /// \param frames    RestFrames to be added as children
-    void AddChildFrames(const RestFrames::RFList<RestFrame>& frames);
+    void AddChildFrames(const RestFrameList& frames);
 
     /// \brief Set the parent frame for this frame
     ///
@@ -145,13 +141,13 @@ namespace RestFrames {
     ///
     /// Method for removing a child RestFrame from the
     /// list of children of this frame (if it is in that list).
-    void RemoveChild(RestFrame& frame);
+    void RemoveChildFrame(RestFrame& frame);
 
     /// \brief Remove all the children of this frame
     ///
     /// Method for removing all the children of this frame. 
     /// No child left behind.
-    void RemoveChildren();
+    void RemoveChildFrames();
   
     ////////////////////////////////////////////////////////////////////
     /// \name RestFrame tree structure methods
@@ -175,10 +171,10 @@ namespace RestFrames {
     virtual RestFrame const& GetParentFrame() const;
 
     /// \brief Get the RestFrame of the *i* th child
-    virtual RestFrame& GetChildFrame(int i) const;
+    virtual RestFrame& GetChildFrame(int i = 0) const;
 
     /// \brief Returns a list of this frame's child RestFrame s
-    RestFrames::RFList<RestFrame> GetChildren() const;
+    RestFrameList const& GetChildFrames() const;
 
     /// \brief Returns the LabFrame that this frame inherits from
     ///
@@ -223,13 +219,13 @@ namespace RestFrames {
     /// filled recursively and including children of children
     /// which are of FrameType **type**. If **type** is LabFrame
     /// (default) then all frames, regardless of type, are included.
-    virtual RestFrames::RFList<RestFrame> GetListFrames(FrameType type = kLabFrame) const;
+    virtual RestFrameList GetListFrames(FrameType type = kLabFrame) const;
 
     /// \brief Returns a list of **VisibleFrame** s inheriting from this
-    virtual RestFrames::RFList<RestFrame> GetListVisibleFrames() const;
+    virtual RestFrameList GetListVisibleFrames() const;
 
     /// \brief Returns a list of **InvisibleFrame** s inheriting from this
-    virtual RestFrames::RFList<RestFrame> GetListInvisibleFrames() const;
+    virtual RestFrameList GetListInvisibleFrames() const;
     
     ///@}
 
@@ -244,12 +240,22 @@ namespace RestFrames {
     ////////////////////////////////////////////////////////////////////
     ///@{
 
-    /// \brief Combines RestFrame s into \ref RFList<RestFrames::RestFrame>
+    /// \brief Combines RestFrame s into RestFrameList
     ///
     /// \param frame    additional RestFrame to add in list
     ///
     /// Returns a list of RestFrame s containing __frame__ and this
-    RestFrames::RFList<RestFrame> operator+(RestFrame& frame); 
+    RestFrameList operator + (RestFrame& frame); 
+
+    /// \brief Combines RestFrame s into RestFrameList
+    ///
+    /// \param frames    list of additional RestFrames to add in list
+    ///
+    /// Returns a list of RestFrame s containing __frames__ and this
+    RestFrameList operator + (const RestFrameList& frames); 
+
+    /// \brief Returns the charge of this frame.
+    virtual RFCharge GetCharge() const;
 
     /// \brief Returns the mass of this frame.
     virtual double GetMass() const;
@@ -362,7 +368,8 @@ namespace RestFrames {
     ///          \vec{p}_{i}\cdot\vec{p}_{j}\right) } }
     ///          { \sum_{i}^{N}\left|\vec{p}_{i}\right| }~. \f]
     /// If the input vector contains no lists then zero is returned.
-    /// double GetVisibleShape(const vector<RFList<RestFrame> >& frames) const;
+    
+    // double GetVisibleShape(const vector<RFList<RestFrame> >& frames) const;
 
     /// \brief Returns scalar sum of visible child momenta
     ///
@@ -394,6 +401,8 @@ namespace RestFrames {
 
     /// \brief Returns the vector normal to the decay plane of this frame
     ///
+    /// \param frame    (optional) frame defining child axis
+    ///
     /// Returns the vector normal to the decay plane of this frame. The
     /// normal vector, \f$\hat{n}_{\perp}\f$, is defined as:
     /// \f[ \hat{n}_{\perp}\ = \frac{ 
@@ -410,8 +419,9 @@ namespace RestFrames {
     /// where \f$\vec{p}_{C}^{~F}\f$ is the momentum of the child frame 
     /// evaluated in this frame and \f$\vec{n}_{\parallel}\f$ is the vector
     /// defining the transverse plane as returned by RestFrame::GetAxis().
-    /// If this frame has no children then an empty vector is returned.
-    TVector3 GetDecayPlaneNormalVector() const;
+    /// If this frame has no children then RestFrame::GetAxis() is returned.
+    TVector3 GetDecayPlaneNormalVector(const RestFrame& frame = 
+				       RestFrame::Empty()) const;
 
     /// \brief Returns the azimuthal angle between decay planes
     ///
@@ -424,7 +434,7 @@ namespace RestFrames {
 
     /// \brief Returns the cosine of this frame's decay angle
     ///
-    /// \param frame    frame defining child axis
+    /// \param frame    (optional) frame defining child axis
     ///
     /// Returns the cosine of this frame's decay angle, 
     /// \f$\cos\theta_{F}\f$, which is defined as:
@@ -451,33 +461,35 @@ namespace RestFrames {
 			      RestFrame::Empty()) const;
     ///@}
 
+    /// \brief Returns empty instance of class
+    static RestFrame& Empty();
+
+    /// \brief Returns empty RestFrameList
+    static ConstRestFrameList const& EmptyList();
+
   protected:   
     FrameType m_Type;
     AnaType m_Ana;
 
     virtual bool IsSoundBody() const;
 
-    void SetChildBoostVector(RestFrame& frame, const TVector3& boost);
-    void SetParentBoostVector(const TVector3& boost);
-    TVector3 GetChildBoostVector(RestFrame& frame) const;
-    TVector3 GetParentBoostVector() const;
-
-    void SetFourVector(const TLorentzVector& V, const RestFrame& frame);
-
-    /// \brief Recursively initialize this frame and its children for analysis
-    virtual bool InitializeAnalysisRecursive() = 0;
-
-    /// \brief Recursively clear event information from this frame and its children
-    virtual bool ClearEventRecursive() = 0;
-
-    /// \brief Recursively analyze event in this frame and its children
-    virtual bool AnalyzeEventRecursive() = 0;
+    TVector3 const& GetChildBoostVector(RestFrame& frame) const;
+    TVector3 const& GetParentBoostVector() const;
 
     /// \brief Recursively initialize this frame's tree
     virtual bool InitializeTreeRecursive();
 
+    /// \brief Recursively initialize this frame and its children for analysis
+    virtual bool InitializeAnalysisRecursive() = 0;
+
+    /// \brief Recursively analyze event in this frame and its children
+    virtual bool AnalyzeEventRecursive() = 0;
+
+    /// \brief Recursively clear event information from this frame and its children
+    virtual bool ClearEventRecursive() = 0;
+
     /// \brief Check this RestFrame 's tree for circular connections
-    bool IsCircularTree(vector<RFKey>& keys) const;
+    bool IsCircularTree(std::vector<RFKey>& keys) const;
 
   private:
     /// \brief RestFrame ID key
@@ -493,18 +505,30 @@ namespace RestFrames {
     const RestFrame* m_ProdFramePtr;
 
     // list of child frames and boosts
-    RestFrames::RFList<RestFrame> m_ChildFrames;
-    mutable map<const RestFrame*, TVector3> m_ChildBoosts;
+    RestFrameList m_ChildFrames;
+    mutable std::map<const RestFrame*, TVector3> m_ChildBoosts;
 
     // parent frame and boost
     RestFrame* m_ParentFramePtr;
     TVector3 m_ParentBoost;
 
-    // Recursively get lists of frames
-    void FillListFramesRecursive(RFList<RestFrame>& frames, FrameType type = kLabFrame) const;
+    void SetFourVector(const TLorentzVector& V, const RestFrame& frame);
+    void SetChildBoostVector(RestFrame& frame, const TVector3& boost);
+    void SetParentBoostVector(const TVector3& boost);
 
-    bool FindPathToFrame(const RestFrame& dest_frame, const RestFrame& prev_frame, 
-			 vector<TVector3>& boosts) const;
+    // Recursively get lists of frames
+    void FillListFramesRecursive(RestFrameList& frames,
+				 FrameType type = kLabFrame) const;
+
+    bool FindPathToFrame(const RestFrame& dest_frame,
+			 const RestFrame& prev_frame, 
+			 std::vector<const TVector3*>& boosts) const;
+
+    static const ConstRestFrameList m_EmptyList;
+    
+    friend class ReconstructionFrame;
+    friend class GeneratorFrame;
+
   };
 
 }

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   CombinatoricState.hh
@@ -32,8 +32,6 @@
 
 #include "RestFrames/State.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class VisibleState;
@@ -44,7 +42,7 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class CombinatoricState : public State {
   public:
-    CombinatoricState(const string& sname, const string& stitle);
+    CombinatoricState(const std::string& sname, const std::string& stitle);
     CombinatoricState();
     virtual ~CombinatoricState();
 	
@@ -52,31 +50,31 @@ namespace RestFrames {
 
     virtual void Clear();
 
-    virtual void AddFrame(RestFrame& frame);
+    virtual void AddFrame(const RestFrame& frame);
 
     virtual void SetParentJigsaw(Jigsaw& jigsaw);
     virtual void SetChildJigsaw(Jigsaw& jigsaw);
 
     virtual void Boost(const TVector3& B);
-    virtual TLorentzVector GetFourVector() const; 
+    virtual TLorentzVector GetFourVector() const;
+    virtual RFCharge GetCharge() const;
 
     void ClearElements();
     void AddElement(VisibleState& state);
-    void AddElements(const RestFrames::RFList<VisibleState>& states);
-    RestFrames::RFList<VisibleState> GetElements() const;
+    void AddElements(const VisibleStateList& states);
+    VisibleStateList const& GetElements() const;
     int GetNElements() const;
 
     bool ContainsElement(const State& state) const;
     bool ContainsElement(const RFKey& key) const;
-    const VisibleState& GetElement(const RFKey& key) const;
+    VisibleState const& GetElement(const RFKey& key) const;
 
   protected:
-    RestFrames::RFList<VisibleState> m_Elements;
+    VisibleStateList m_Elements;
   
   private:
     static CombinatoricState m_Empty;
-    void Init();
-
+  
   };
 
 }

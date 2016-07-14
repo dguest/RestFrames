@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   LabGenFrame.hh
@@ -33,8 +33,6 @@
 #include "RestFrames/LabFrame.hh"
 #include "RestFrames/GeneratorFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
@@ -42,7 +40,7 @@ namespace RestFrames {
   ///////////////////////////////////////////////
   class LabGenFrame : public LabFrame<GeneratorFrame> {
   public:
-    LabGenFrame(const string& sname, const string& stitle);
+    LabGenFrame(const std::string& sname, const std::string& stitle);
     virtual ~LabGenFrame();
   
     virtual void Clear();
@@ -52,20 +50,42 @@ namespace RestFrames {
     virtual bool AnalyzeEvent();
 
     virtual void SetThreeVector(const TVector3& P);
-    virtual void SetTransverseMomenta(double val);
-    virtual void SetLongitudinalMomenta(double val);
+    virtual void SetTransverseMomentum(double val);
+    virtual void SetLongitudinalMomentum(double val);
     virtual void SetPhi(double val);
+
+    virtual void SetPToverM(double val);
+
+    void SetN_MCMCBurnIn(int N);
+    void SetN_MCMCDiscard(int N);
+
+    void SetFailTolerance(int N);
     
   protected:
     double m_PT;
     double m_PL;
     double m_Phi;
-    double m_Theta;
+    double m_PToM;
 
-    virtual void ResetFrame();
+    double m_MaxM;
+
+    virtual bool InitializeGenAnalysis();
+
+    virtual void ResetGenFrame();
     virtual bool GenerateFrame();
 
-    void ResetProductionAngles();
+    double m_ChildMassMCMC;
+    double m_ChildProbMCMC;
+
+    virtual bool IterateMCMC();
+    
+    int m_NBurnInMCMC;
+    int m_NDiscardMCMC;
+
+    int m_FailTolerance;
+    
+    long m_Ngenerated;
+    long m_Npassed;
 
   private:
     void Init();

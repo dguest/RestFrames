@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleGroup.hh
@@ -33,15 +33,13 @@
 #include "RestFrames/Group.hh"
 #include "RestFrames/InvisibleState.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   class InvisibleState;
 
   class InvisibleGroup : public Group {
   public:
-    InvisibleGroup(const string& sname, const string& stitle);
+    InvisibleGroup(const std::string& sname, const std::string& stitle);
     InvisibleGroup();
     virtual ~InvisibleGroup();
 	
@@ -49,12 +47,12 @@ namespace RestFrames {
 
     virtual void AddFrame(RestFrame& frame);
     virtual void AddJigsaw(Jigsaw& jigsaw);
-
-    virtual InvisibleState& GetParentState() const;
     
     // Event analysis functions
+    virtual void SetMass(double M);
     virtual void SetLabFrameFourVector(const TLorentzVector& V);
     virtual void SetLabFrameThreeVector(const TVector3& V);
+
     virtual TLorentzVector GetLabFrameFourVector() const;
 
     static InvisibleGroup& Empty();
@@ -62,7 +60,10 @@ namespace RestFrames {
   protected:
     virtual bool ClearEvent();
     virtual bool AnalyzeEvent();
+
     virtual InvisibleState& InitializeParentState();
+    virtual InvisibleState& GetParentState() const;
+    
     virtual InvisibleState& GetChildState(int i) const;
 
   private:

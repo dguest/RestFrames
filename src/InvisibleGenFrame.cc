@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   InvisibleGenFrame.cc
@@ -29,18 +29,14 @@
 
 #include "RestFrames/InvisibleGenFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
 
   ///////////////////////////////////////////////
   // InvisibleGenFrame class
   ///////////////////////////////////////////////
-  InvisibleGenFrame::InvisibleGenFrame(const string& sname, const string& stitle)
-    : InvisibleFrame<GeneratorFrame>(sname, stitle)
-  {
-    m_Mass = 0.;
-  }
+  InvisibleGenFrame::InvisibleGenFrame(const std::string& sname, 
+				       const std::string& stitle)
+    : InvisibleFrame<GeneratorFrame>(sname, stitle) {}
 
   InvisibleGenFrame::~InvisibleGenFrame(){ }
 
@@ -48,18 +44,14 @@ namespace RestFrames {
     if(val < 0.){
       m_Log << LogWarning;
       m_Log << "Unable to set mass to negative value ";
-      m_Log << val << ". Setting to zero." << m_End;
+      m_Log << val << ". Setting to zero." << LogEnd;
       m_Mass = 0.;
     } else {
       m_Mass = val;
     }
   }
 
-  double InvisibleGenFrame::GetMass() const {
-    return m_Mass;
-  }
-
-  void InvisibleGenFrame::ResetFrame() {}
+  void InvisibleGenFrame::ResetGenFrame() {}
 
   bool InvisibleGenFrame::GenerateFrame(){ 
     return true;

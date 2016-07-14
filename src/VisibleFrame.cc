@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////
 //   RestFrames: particle physics event analysis library
 //   --------------------------------------------------------------------
-//   Copyright (c) 2014-2015, Christopher Rogan
+//   Copyright (c) 2014-2016, Christopher Rogan
 /////////////////////////////////////////////////////////////////////////
 ///
 ///  \file   VisibleFrame.cc
@@ -31,17 +31,17 @@
 #include "RestFrames/ReconstructionFrame.hh"
 #include "RestFrames/GeneratorFrame.hh"
 
-using namespace std;
-
 namespace RestFrames {
   ///////////////////////////////////////////////
   // VisibleFrame class methods
   ///////////////////////////////////////////////
   template <class T> 
-  VisibleFrame<T>::VisibleFrame(const string& sname, const string& stitle) 
+  VisibleFrame<T>::VisibleFrame(const std::string& sname, 
+				const std::string& stitle) 
     : T(sname, stitle)
   {
     T::m_Type = kVisibleFrame;
+    m_Charge = 0;
   }
 
   template <class T> 
@@ -59,17 +59,53 @@ namespace RestFrames {
     
     int Nchild = T::GetNChildren();
     if(Nchild > 0 || !T::GetParentFrame()){
-      T::m_Log << LogWarning << "Problem with parent or child frames" << m_End;
+      T::m_Log << LogWarning << "Problem with parent or child frames" << LogEnd;
       return T::SetBody(false);
     }
     return T::SetBody(true);
   }
 
   template <class T> 
-  void VisibleFrame<T>::SetLabFrameFourVector(const TLorentzVector& V){
-    m_Lab_P.SetVectM(V.Vect(),V.M());
+  void VisibleFrame<T>::SetCharge(const RFCharge& charge){
+    m_Charge = charge;
   }
 
+  template <class T> 
+  void VisibleFrame<T>::SetCharge(int charge){
+    m_Charge = charge;
+  }
+
+  template <class T> 
+  void VisibleFrame<T>::SetCharge(int charge_num, int charge_den){
+    RFCharge charge(charge_num, charge_den);
+    m_Charge = charge;
+  }
+
+  template <class T> 
+  RFCharge VisibleFrame<T>::GetCharge() const {
+    return m_Charge;
+  }
+  
+  template <class T> 
+  void VisibleFrame<T>::SetLabFrameFourVector(const TLorentzVector& V,
+					      const RFCharge& charge){
+    m_Lab_P.SetVectM(V.Vect(),V.M());
+    SetCharge(charge);
+  }
+  
+  template <class T> 
+  void VisibleFrame<T>::SetLabFrameFourVector(const TLorentzVector& V,
+					      int charge){
+    SetLabFrameFourVector(V, RFCharge(charge));
+  }
+  
+  template <class T> 
+  void VisibleFrame<T>::SetLabFrameFourVector(const TLorentzVector& V,
+					      int charge_num, 
+					      int charge_den){
+    SetLabFrameFourVector(V, RFCharge(charge_num,charge_den));
+  }
+  
   template <class T> 
   TLorentzVector VisibleFrame<T>::GetLabFrameFourVector() const {
     TLorentzVector V;
